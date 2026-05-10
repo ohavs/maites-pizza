@@ -77,7 +77,7 @@ export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
           
           <div className="absolute -right-10 -bottom-10 w-48 h-48 opacity-40 z-0">
             <Image
-              src="/images/pizza-base.png"
+              src="/images/margherita.webp"
               alt="Build your pizza"
               fill
               className="object-contain drop-shadow-2xl"

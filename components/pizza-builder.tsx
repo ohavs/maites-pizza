@@ -70,7 +70,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       customToppings: selectedToppings,
       price: basePrice + toppingsPrice, // Unit price
       quantity: quantity,
-      image: "/images/pizza-base.png"
+      image: "/images/margherita.webp"
     }
 
     if (editingItem && onUpdateCartItem) {
@@ -167,7 +167,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
             className="absolute inset-0"
           >
             <Image
-              src="/images/pizza-base.png"
+              src="/images/margherita.webp"
               alt="Pizza base"
               fill
               className="object-contain rounded-full"

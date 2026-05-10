@@ -7,17 +7,17 @@ export function FavoritesView({ onNavigate }: { onNavigate: (view: string) => vo
     const favorites = [
         {
             id: 1,
-            name: "מרגריטה",
-            price: 14.99,
+            name: "פיצה פולנטה",
+            price: 18.99,
             rating: 4.8,
-            image: "/images/margherita.png",
+            image: "/images/corn.webp",
         },
         {
-            id: 4,
-            name: "מיוחדת כמהין",
-            price: 22.99,
+            id: 2,
+            name: "פיצה נפוליטנית",
+            price: 16.99,
             rating: 4.9,
-            image: "/images/special.png",
+            image: "/images/basil.webp",
         },
     ]
 

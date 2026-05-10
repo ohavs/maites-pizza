@@ -81,7 +81,7 @@ export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizer
         <div className="relative w-full h-full">
             <div className="absolute inset-0">
                 <Image
-                    src="/images/pizza-base.png"
+                    src="/images/margherita.webp"
                     alt="Pizza base"
                     fill
                     className="object-contain drop-shadow-sm rounded-full"

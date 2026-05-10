@@ -15,31 +15,17 @@ const categories = [
 const searchResults = [
     {
         id: 1,
-        name: "מרגריטה",
-        price: 14.99,
+        name: "פיצה פולנטה",
+        price: 18.99,
         rating: 4.8,
-        image: "/images/margherita.png",
+        image: "/images/corn.webp",
     },
     {
         id: 2,
-        name: "פפרוני",
+        name: "פיצה נפוליטנית",
         price: 16.99,
         rating: 4.9,
-        image: "/images/pepperoni.png",
-    },
-    {
-        id: 3,
-        name: "ירקות",
-        price: 15.99,
-        rating: 4.7,
-        image: "/images/veggie.png",
-    },
-    {
-        id: 4,
-        name: "מיוחדת כמהין",
-        price: 22.99,
-        rating: 4.9,
-        image: "/images/special.png",
+        image: "/images/basil.webp",
     },
 ]
 
