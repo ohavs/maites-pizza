@@ -10,14 +10,14 @@ export function FavoritesView({ onNavigate }: { onNavigate: (view: string) => vo
             name: "מרגריטה",
             price: 14.99,
             rating: 4.8,
-            image: "/images/margherita.jpg",
+            image: "/images/margherita.png",
         },
         {
             id: 4,
             name: "מיוחדת כמהין",
             price: 22.99,
             rating: 4.9,
-            image: "/images/special.jpg",
+            image: "/images/special.png",
         },
     ]
 

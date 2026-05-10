@@ -1,6 +1,7 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
 import { Rubik } from 'next/font/google'
+import localFont from 'next/font/local'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
@@ -10,9 +11,16 @@ const rubik = Rubik({
   variable: '--font-rubik',
 });
 
+const bisten = localFont({
+  src: '../fonts/Bisten.otf',
+  variable: '--font-bisten',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'PizzaCraft - הרכבת פיצה מושלמת',
-  description: 'בנו והזמינו את פיצת החלומות שלכם עם בונה הפיצה האינטראקטיבי שלנו',
+  title: 'Maites Pizza',
+  description: 'הזמינו את הפיצה המושלמת שלכם',
+  manifest: '/manifest.json',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -41,6 +49,8 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
+import { PWAPrompt } from '@/components/pwa-prompt'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,8 +58,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl">
-      <body className={`${rubik.className} antialiased`}>
+      <body className={`${rubik.className} ${bisten.variable} antialiased`}>
         {children}
+        <PWAPrompt />
         <Analytics />
       </body>
     </html>

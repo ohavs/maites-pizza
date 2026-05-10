@@ -1,13 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Home, ShoppingBag, Heart, User, UtensilsCrossed } from "lucide-react"
+import { Home, ShoppingBag, User, UtensilsCrossed } from "lucide-react"
 
 const navItems = [
   { id: "home", icon: Home, label: "בית" },
   { id: "menu", icon: UtensilsCrossed, label: "תפריט" },
   { id: "cart", icon: ShoppingBag, label: "סל" },
-  { id: "favorites", icon: Heart, label: "מועדפים" },
   { id: "profile", icon: User, label: "פרופיל" },
 ]
 

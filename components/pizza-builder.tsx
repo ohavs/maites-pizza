@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronRight, Plus, Circle } from "lucide-react"
+import { ChevronRight, Plus, Circle, Trash2, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { CartItem, Coverage, SelectedTopping, Topping } from "@/lib/types"
 import { toppings, toppingCategories } from "@/lib/pizza-data"
@@ -16,7 +16,7 @@ interface PizzaBuilderProps {
 }
 
 export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialToppings, editingItem }: PizzaBuilderProps) {
-  const [selectedCategory, setSelectedCategory] = useState("cheese")
+  const [selectedCategory, setSelectedCategory] = useState("sauce")
   const [selectedToppings, setSelectedToppings] = useState<SelectedTopping[]>(initialToppings || [])
   const [quantity, setQuantity] = useState(editingItem?.quantity || 1)
 
@@ -106,12 +106,14 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       const thetaRandom = seededRandom(itemSeed + 1)
 
       // Distribution
-      // Radius: Limit to ~35%  to ensure toppings stay strictly on the pizza face
-      // reducing from previous 42% which caused overflow on transparent edges
-      const r = Math.sqrt(rRandom) * 35
+      // Radius: Cover up to 42% to ensure toppings fill the pizza face properly
+      const r = Math.sqrt(rRandom) * 42
 
       // Angle based on coverage with safety buffer for the split line
-      const splitBuffer = 0.3 // ~17 degrees safety zone near the middle
+      // Since X=0 is Left and X=100 is Right:
+      // 'right' coverage (X > 50) means Math.cos(theta) > 0 -> angles between -PI/2 and PI/2
+      // 'left' coverage (X < 50) means Math.cos(theta) < 0 -> angles between PI/2 and 3PI/2
+      const splitBuffer = 0.05 // Small safety zone near the middle
       let minAngle = 0
       let maxAngle = Math.PI * 2
 
@@ -157,8 +159,8 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       </div>
 
       {/* Pizza Stage - Fixed & Compact */}
-      <div className="relative flex-none h-[200px] flex items-center justify-center px-6 overflow-hidden shrink-0 z-0">
-        <div className="relative w-full max-w-[200px] aspect-square">
+      <div className="relative flex-none h-[280px] flex items-center justify-center px-6 overflow-hidden shrink-0 z-0">
+        <div className="relative w-full max-w-[280px] aspect-square">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -168,7 +170,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
               src="/images/pizza-base.png"
               alt="Pizza base"
               fill
-              className="object-contain drop-shadow-2xl rounded-full"
+              className="object-contain rounded-full"
               priority
             />
           </motion.div>
@@ -247,27 +249,33 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
 
       {/* Scrollable Content Area - Controls Panel */}
       <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide -mt-4 z-10 relative">
-        <div className="flex-1 rounded-t-[30px] bg-card px-6 pt-4 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] min-h-full">
+        <div className="flex-1 rounded-t-[30px] bg-background px-6 pt-4 pb-6 min-h-full border-t border-border/20">
           {/* Category Tabs */}
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="mb-4 flex gap-4 overflow-x-auto pb-0 scrollbar-hide border-b border-border/40">
             {toppingCategories.map((category) => (
               <motion.button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                whileTap={{ scale: 0.95 }}
-                className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${selectedCategory === category.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                className={`flex items-center gap-2 whitespace-nowrap px-2 py-3 text-sm font-medium transition-colors relative ${selectedCategory === category.id
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 <span>{category.icon}</span>
                 <span>{category.name}</span>
+                {selectedCategory === category.id && (
+                  <motion.div 
+                    layoutId="categoryIndicator" 
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" 
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
               </motion.button>
             ))}
           </div>
 
           {/* Toppings Grid (Vertical list now to accommodate controls) */}
-          <div className="flex flex-col gap-2 mb-8">
+          <div className="flex flex-col gap-1 mb-8">
             {currentToppings.map((topping: any) => {
               const selected = selectedToppings.find(t => t.id === topping.id)
               const isSelected = !!selected
@@ -277,9 +285,9 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                   <motion.div
                     onClick={() => toggleTopping(topping.id)}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full flex items-center justify-between rounded-[20px] pl-2 pr-4 py-3 transition-all cursor-pointer ${isSelected
-                      ? "bg-primary/5 border-primary border"
-                      : "bg-muted text-foreground border border-transparent"
+                    className={`w-full flex items-center justify-between py-3 transition-all cursor-pointer border-b border-border/40 last:border-0 ${isSelected
+                      ? ""
+                      : "text-foreground"
                       }`}
                   >
                     {/* Right Side Info (RTL) */}
@@ -298,36 +306,44 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
 
                     {/* Left Side Controls or Add Button */}
                     {isSelected && selected ? (
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={(e) => updateCoverage(topping.id, "right", e)}
-                          className={`p-1.5 rounded-lg border transition-all ${selected.coverage === 'right' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border'}`}
+                          className={`p-2 rounded-full transition-all ${selected.coverage === 'right' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                           title="צד ימין"
                         >
-                          <div className="w-3.5 h-3.5 rounded-full border border-current relative overflow-hidden">
-                            <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-current opacity-60"></div>
+                          <div className="w-3.5 h-3.5 rounded-full border-2 border-current relative overflow-hidden">
+                            <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-current opacity-70"></div>
                           </div>
                         </button>
                         <button
                           onClick={(e) => updateCoverage(topping.id, "whole", e)}
-                          className={`p-1.5 rounded-lg border transition-all ${selected.coverage === 'whole' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border'}`}
+                          className={`p-2 rounded-full transition-all ${selected.coverage === 'whole' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                           title="כל הפיצה"
                         >
-                          <Circle className="w-3.5 h-3.5 fill-current" />
+                          <Circle className="w-3.5 h-3.5 fill-current border-2 border-current rounded-full" />
                         </button>
                         <button
                           onClick={(e) => updateCoverage(topping.id, "left", e)}
-                          className={`p-1.5 rounded-lg border transition-all ${selected.coverage === 'left' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border'}`}
+                          className={`p-2 rounded-full transition-all ${selected.coverage === 'left' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                           title="צד שמאל"
                         >
-                          <div className="w-3.5 h-3.5 rounded-full border border-current relative overflow-hidden">
-                            <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-current opacity-60"></div>
+                          <div className="w-3.5 h-3.5 rounded-full border-2 border-current relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-current opacity-70"></div>
                           </div>
+                        </button>
+                        <div className="w-px h-5 bg-border mx-2" />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleTopping(topping.id); }}
+                          className="p-2 rounded-full transition-all text-red-500 hover:bg-red-50"
+                          title="הסר תוספת"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     ) : (
-                      <div className="h-8 w-8 flex items-center justify-center rounded-full bg-background border shadow-sm">
-                        <Plus className="h-4 w-4 text-muted-foreground" />
+                      <div className="h-8 w-8 flex items-center justify-center rounded-full bg-muted text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <Plus className="h-4 w-4" />
                       </div>
                     )}
                   </motion.div>
@@ -336,35 +352,17 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
             })}
           </div>
 
-          {/* In-Flow Footer Area (At the bottom of toppings) */}
-          <div className="pb-40 pt-4">
-            <div className="flex items-center gap-4 max-w-md mx-auto">
-              {/* Counter removed */}
-
-              <motion.button
-                onClick={handleAdd}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 h-14 bg-gradient-to-r from-primary to-orange-400 text-primary-foreground rounded-2xl font-bold shadow-lg flex items-center justify-between px-6 text-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <span>{editingItem ? 'עדכון מגש' : 'הוספה לסל'}</span>
-                  {quantity > 1 && <span className="text-sm opacity-80 bg-black/10 px-2 py-0.5 rounded-full">x{quantity}</span>}
-                </div>
-                <span>₪{totalPrice.toFixed(2)}</span>
-              </motion.button>
-
-              {/* Separate small counter if needed or just integrate into logic? 
-                   User said "remove the counter" because text was overlapping. 
-                   But how does user select quantity? 
-                   "Remove the counter... because there is not enough width".
-                   Maybe I should just leave quantity at 1 or put usage elsewhere?
-                   User said "get rid of the counter". I will assume they mean the UI element.
-                   I will keep `quantity` state at 1, or maybe add a small quantity indicator inside button if needed, 
-                   but strictly removing the big counter block. 
-               */}
-            </div>
+          {/* In-Flow Footer Area */}
+          <div className="pb-[120px] pt-6 px-4">
+            <motion.button
+              onClick={handleAdd}
+              whileTap={{ scale: 0.9 }}
+              className="w-full max-w-[280px] mx-auto h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center gap-3 shrink-0 font-bold text-lg"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              הוספה לסל
+            </motion.button>
           </div>
-
         </div>
       </div>
     </div>

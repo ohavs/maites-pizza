@@ -1,0 +1,19 @@
+{
+  "name": "Maites Pizza",
+  "short_name": "Maites",
+  "description": "הזמינו את הפיצה המושלמת שלכם",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF5E00",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

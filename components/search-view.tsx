@@ -18,28 +18,28 @@ const searchResults = [
         name: "מרגריטה",
         price: 14.99,
         rating: 4.8,
-        image: "/images/margherita.jpg",
+        image: "/images/margherita.png",
     },
     {
         id: 2,
         name: "פפרוני",
         price: 16.99,
         rating: 4.9,
-        image: "/images/pepperoni.jpg",
+        image: "/images/pepperoni.png",
     },
     {
         id: 3,
         name: "ירקות",
         price: 15.99,
         rating: 4.7,
-        image: "/images/veggie.jpg",
+        image: "/images/veggie.png",
     },
     {
         id: 4,
         name: "מיוחדת כמהין",
         price: 22.99,
         rating: 4.9,
-        image: "/images/special.jpg",
+        image: "/images/special.png",
     },
 ]
 

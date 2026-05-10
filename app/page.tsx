@@ -8,7 +8,6 @@ import { PizzaBuilder } from "@/components/pizza-builder"
 import { BottomNavigation } from "@/components/bottom-navigation"
 import { SearchView } from "@/components/search-view"
 import { CartView } from "@/components/cart-view"
-import { FavoritesView } from "@/components/favorites-view"
 import { ProfileView } from "@/components/profile-view"
 import { MenuGrid } from "@/components/menu-grid"
 import { PizzaDetailsView } from "@/components/pizza-details-view"
@@ -69,7 +68,7 @@ export default function PizzaCraftApp() {
   const editingItem = editingItemId ? cartItems.find(i => i.id === editingItemId) : null
 
   return (
-    <main className="relative flex min-h-screen flex-col bg-background overflow-hidden">
+    <main className="relative flex h-[100dvh] flex-col bg-background overflow-hidden">
       <AnimatePresence mode="wait">
         {currentView === "builder" ? (
           <motion.div
@@ -99,7 +98,7 @@ export default function PizzaCraftApp() {
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-1 flex-col h-full"
+            className="flex flex-1 flex-col h-full min-h-0"
           >
             <MenuGrid
               onBack={() => setCurrentView("home")}
@@ -113,12 +112,13 @@ export default function PizzaCraftApp() {
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-1 flex-col h-full"
+            className="flex flex-1 flex-col h-full min-h-0"
           >
             <PizzaDetailsView
               pizza={selectedPizza}
               onBack={() => setCurrentView("home")}
               onAddToCart={handleAddToCart}
+              onNavigate={handleNavigate}
             />
           </motion.div>
         ) : (
@@ -128,7 +128,7 @@ export default function PizzaCraftApp() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-1 flex-col h-full"
+            className="flex flex-1 flex-col h-full min-h-0"
           >
             {activeTab === "home" && (
               <>
@@ -144,7 +144,6 @@ export default function PizzaCraftApp() {
             )}
             {activeTab === "search" && <SearchView onNavigate={handleNavigate} />}
             {activeTab === "cart" && <CartView items={cartItems} onEditItem={handleEditCartItem} />}
-            {activeTab === "favorites" && <FavoritesView onNavigate={handleNavigate} />}
             {activeTab === "profile" && <ProfileView />}
           </motion.div>
         )}

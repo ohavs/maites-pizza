@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { ChevronRight, Clock, Flame, Star, Minus, Plus } from "lucide-react"
+import { ChevronRight, ChevronLeft, ShoppingCart, Plus } from "lucide-react"
 import Image from "next/image"
 import { CartItem } from "@/lib/types"
+import { pizzas } from "@/lib/data"
 
 interface PizzaDetailsViewProps {
     pizza: {
@@ -19,10 +20,15 @@ interface PizzaDetailsViewProps {
     }
     onBack: () => void
     onAddToCart: (item: CartItem) => void
+    onNavigate?: (view: string, id?: number) => void
 }
 
-export function PizzaDetailsView({ pizza, onBack, onAddToCart }: PizzaDetailsViewProps) {
+export function PizzaDetailsView({ pizza, onBack, onAddToCart, onNavigate }: PizzaDetailsViewProps) {
     const [quantity, setQuantity] = useState(1)
+
+    const currentIndex = pizzas.findIndex(p => p.id === pizza.id)
+    const nextPizza = pizzas[(currentIndex + 1) % pizzas.length]
+    const prevPizza = pizzas[(currentIndex - 1 + pizzas.length) % pizzas.length]
 
     const handleAdd = () => {
         const newItem: CartItem = {
@@ -39,7 +45,7 @@ export function PizzaDetailsView({ pizza, onBack, onAddToCart }: PizzaDetailsVie
     return (
         <div className="flex flex-1 flex-col bg-background h-full overflow-hidden">
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide pb-40">
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 absolute top-0 left-0 right-0 z-20">
                     <motion.button
@@ -52,88 +58,83 @@ export function PizzaDetailsView({ pizza, onBack, onAddToCart }: PizzaDetailsVie
                 </div>
 
                 {/* Hero Image */}
-                <div className="relative h-[40vh] w-full bg-muted/20">
+                <div className="relative h-[40vh] w-full">
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="absolute inset-0 flex items-center justify-center p-8"
                     >
-                        <div className="relative w-full h-full max-w-[300px] mx-auto aspect-square">
+                        <div className="relative w-full h-full max-w-[300px]">
                             <Image
                                 src={pizza.image}
                                 alt={pizza.name}
                                 fill
-                                className="object-contain drop-shadow-2xl"
+                                className="object-contain"
                                 priority
                             />
                         </div>
                     </motion.div>
-                </div>
 
+                    {/* Navigation Arrows */}
+                    {onNavigate && (
+                        <>
+                            <button
+                                onClick={() => onNavigate("pizza-details", nextPizza.id)}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 text-foreground/70 hover:text-foreground transition-colors z-20"
+                            >
+                                <ChevronLeft className="w-8 h-8" strokeWidth={1.5} />
+                            </button>
+                            <button
+                                onClick={() => onNavigate("pizza-details", prevPizza.id)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-foreground/70 hover:text-foreground transition-colors z-20"
+                            >
+                                <ChevronRight className="w-8 h-8" strokeWidth={1.5} />
+                            </button>
+                        </>
+                    )}
+                </div>
                 {/* Content */}
-                <div className="relative -mt-10 rounded-t-[40px] bg-card px-6 pt-10 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] min-h-[50vh]">
-                    <div className="flex justify-between items-start mb-4">
+                <div className="relative -mt-10 rounded-t-[40px] bg-background px-6 pt-10 pb-6 border-t border-border/20">
+                    <div className="flex justify-between items-start mb-6">
                         <div>
                             <h1 className="text-3xl font-bold text-foreground">{pizza.name}</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="font-bold">{pizza.rating}</span>
-                                <span className="text-muted-foreground text-sm">(128 ביקורות)</span>
-                            </div>
                         </div>
                         <div className="text-2xl font-bold text-primary">
                             ₪{pizza.price}
                         </div>
                     </div>
 
-                    <div className="flex gap-4 mb-6">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-sm font-medium">
-                            <Flame className="w-4 h-4" />
-                            {pizza.calories} קלוריות
-                        </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-blue-600 text-sm font-medium">
-                            <Clock className="w-4 h-4" />
-                            20-25 דק'
-                        </div>
-                    </div>
-
                     <div className="mb-6">
-                        <h3 className="font-bold text-lg mb-2">תיאור</h3>
-                        <p className="text-muted-foreground leading-relaxed">
+                        <p className="text-muted-foreground leading-relaxed text-lg">
                             {pizza.description}
                         </p>
                     </div>
 
                     <div className="mb-8">
                         <h3 className="font-bold text-lg mb-2">מרכיבים</h3>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-4 mt-2">
                             {pizza.ingredients.map((ing) => (
-                                <span key={ing} className="px-3 py-1 rounded-xl bg-muted text-sm font-medium text-foreground">
-                                    {ing}
-                                </span>
+                                <div key={ing} className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                                    <span className="text-sm font-medium text-foreground/80">{ing}</span>
+                                </div>
                             ))}
                         </div>
                     </div>
+
+                    {/* In-Flow Footer Actions */}
+                    <div className="mt-4 flex justify-center pb-36">
+                        <motion.button
+                            onClick={handleAdd}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-full max-w-[280px] h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center gap-3 shrink-0 font-bold text-lg mx-auto"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            הוספה לסל
+                        </motion.button>
+                    </div>
                 </div>
             </div>
-
-            {/* Footer Actions */}
-            <div className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-white/20 px-6 pb-28 pt-4 z-30">
-                <div className="flex items-center gap-4 max-w-md mx-auto">
-                    <motion.button
-                        onClick={handleAdd}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex-1 h-14 bg-gradient-to-r from-primary to-orange-400 text-primary-foreground rounded-2xl font-bold shadow-lg flex items-center justify-between px-6 text-lg"
-                    >
-                        <div className="flex items-center gap-2">
-                            <span>הוספה לסל</span>
-                            {quantity > 1 && <span className="text-sm opacity-80 bg-black/10 px-2 py-0.5 rounded-full">x{quantity}</span>}
-                        </div>
-                        <span>₪{(pizza.price * quantity).toFixed(2)}</span>
-                    </motion.button>
-                </div>
-            </div>
-
         </div>
     )
 }
