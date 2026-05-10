@@ -106,8 +106,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       const thetaRandom = seededRandom(itemSeed + 1)
 
       // Distribution
-      // Radius: Cover up to 42% to ensure toppings fill the pizza face properly
-      const r = Math.sqrt(rRandom) * 42
+      // The margherita.webp has ~15% transparent padding on each side.
+      // The actual pizza disc occupies roughly 70% of the image width.
+      // We use radius 31 to keep toppings tight within the crust.
+      const r = Math.sqrt(rRandom) * 31
 
       // Angle based on coverage with safety buffer for the split line
       // Since X=0 is Left and X=100 is Right:
@@ -144,9 +146,9 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-background h-full">
+    <div className="flex flex-1 flex-col overflow-hidden bg-background h-full relative">
       {/* Header - Fixed & Compact */}
-      <div className="flex items-center justify-between px-6 py-2 z-10 shrink-0">
+      <div className="flex items-center justify-between px-6 py-2 z-20 shrink-0 absolute top-0 w-full">
         <motion.button
           onClick={onBack}
           whileTap={{ scale: 0.9 }}
@@ -154,13 +156,13 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
         >
           <ChevronRight className="h-5 w-5 text-foreground" strokeWidth={1.5} />
         </motion.button>
-        <h1 className="text-lg font-bold text-foreground">הרכבת מגש</h1>
+        <h1 className="text-lg font-bold text-foreground drop-shadow-md">הרכבת מגש</h1>
         <div className="w-10" />
       </div>
 
-      {/* Pizza Stage - Fixed & Compact */}
-      <div className="relative flex-none h-[280px] flex items-center justify-center px-6 overflow-hidden shrink-0 z-0">
-        <div className="relative w-full max-w-[280px] aspect-square">
+      {/* Pizza Stage */}
+      <div className="relative flex-none h-[380px] flex items-center justify-center overflow-visible shrink-0 z-0">
+        <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -216,8 +218,8 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                       style={{
                         left: `${pos.x}%`,
                         top: `${pos.y}%`,
-                        width: "28px", // Slightly smaller toppings for smaller pizza
-                        height: "28px",
+                        width: "32px", // Restored size
+                        height: "32px",
                         transform: `translate(-50%, -50%) rotate(${pos.rotation}deg) scale(${pos.scale})`,
                       }}
                     >
@@ -225,13 +227,13 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                         <Image
                           src={toppingData.image}
                           alt={toppingData.name}
-                          width={28}
-                          height={28}
+                          width={32}
+                          height={32}
                           className="object-contain drop-shadow-md"
                         />
                       ) : (
                         <div
-                          className="w-3 h-3 rounded-full mx-auto mt-2" // Smaller dots fallback
+                          className="w-3 h-3 rounded-full mx-auto mt-2"
                           style={{
                             backgroundColor: toppingData?.color,
                             boxShadow: "0 1px 2px rgba(0,0,0,0.3)"
@@ -248,8 +250,8 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       </div>
 
       {/* Scrollable Content Area - Controls Panel */}
-      <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide -mt-4 z-10 relative">
-        <div className="flex-1 rounded-t-[30px] bg-background px-6 pt-4 pb-6 min-h-full border-t border-border/20">
+      <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide -mt-10 z-10 relative">
+        <div className="flex-1 rounded-t-[30px] bg-background px-6 pt-4 pb-6 min-h-full border-t border-border/20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
           {/* Category Tabs */}
           <div className="mb-4 flex gap-4 overflow-x-auto pb-0 scrollbar-hide border-b border-border/40">
             {toppingCategories.map((category) => (
@@ -274,96 +276,103 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
             ))}
           </div>
 
-          {/* Toppings Grid (Vertical list now to accommodate controls) */}
-          <div className="flex flex-col gap-1 mb-8">
+          {/* Toppings Grid (2 per row) */}
+          <div className="grid grid-cols-2 gap-3 mb-8">
             {currentToppings.map((topping: any) => {
               const selected = selectedToppings.find(t => t.id === topping.id)
               const isSelected = !!selected
 
               return (
-                <div key={topping.id} className="relative">
-                  <motion.div
-                    onClick={() => toggleTopping(topping.id)}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full flex items-center justify-between py-3 transition-all cursor-pointer border-b border-border/40 last:border-0 ${isSelected
-                      ? ""
-                      : "text-foreground"
-                      }`}
-                  >
-                    {/* Right Side Info (RTL) */}
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-9 w-9 rounded-full border-2 border-white/30 flex items-center justify-center text-xs shadow-sm shrink-0"
-                        style={{ backgroundColor: topping.color }}
-                      ></div>
-                      <div className="text-right">
-                        <span className="font-bold text-sm block text-foreground leading-tight">{topping.name}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {topping.price > 0 ? `+₪${topping.price.toFixed(2)}` : "חינם"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Left Side Controls or Add Button */}
-                    {isSelected && selected ? (
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={(e) => updateCoverage(topping.id, "right", e)}
-                          className={`p-2 rounded-full transition-all ${selected.coverage === 'right' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                          title="צד ימין"
-                        >
-                          <div className="w-3.5 h-3.5 rounded-full border-2 border-current relative overflow-hidden">
-                            <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-current opacity-70"></div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={(e) => updateCoverage(topping.id, "whole", e)}
-                          className={`p-2 rounded-full transition-all ${selected.coverage === 'whole' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                          title="כל הפיצה"
-                        >
-                          <Circle className="w-3.5 h-3.5 fill-current border-2 border-current rounded-full" />
-                        </button>
-                        <button
-                          onClick={(e) => updateCoverage(topping.id, "left", e)}
-                          className={`p-2 rounded-full transition-all ${selected.coverage === 'left' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                          title="צד שמאל"
-                        >
-                          <div className="w-3.5 h-3.5 rounded-full border-2 border-current relative overflow-hidden">
-                            <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-current opacity-70"></div>
-                          </div>
-                        </button>
-                        <div className="w-px h-5 bg-border mx-2" />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleTopping(topping.id); }}
-                          className="p-2 rounded-full transition-all text-red-500 hover:bg-red-50"
-                          title="הסר תוספת"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="h-8 w-8 flex items-center justify-center rounded-full bg-muted text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        <Plus className="h-4 w-4" />
-                      </div>
+                <motion.div
+                  key={topping.id}
+                  onClick={() => !isSelected && toggleTopping(topping.id)}
+                  whileTap={!isSelected ? { scale: 0.95 } : {}}
+                  layout
+                  className={`relative flex flex-col items-center justify-center border transition-all cursor-pointer overflow-hidden ${
+                    isSelected 
+                      ? "rounded-[2rem] bg-card border-orange-500/30 shadow-md min-h-[110px] p-3" 
+                      : "rounded-full bg-transparent border-border/30 hover:bg-black/5 min-h-[60px] p-2"
+                  }`}
+                >
+                  <motion.div layout className={`text-center flex flex-col items-center justify-center w-full h-full ${isSelected ? "absolute top-3" : ""}`}>
+                    <span className={`font-bold block text-foreground leading-tight transition-all ${isSelected ? "text-xs text-orange-600" : "text-base"}`}>
+                      {topping.name}
+                    </span>
+                    {!isSelected && (
+                      <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                        {topping.price > 0 ? `+₪${topping.price.toFixed(2)}` : "חינם"}
+                      </span>
                     )}
                   </motion.div>
-                </div>
+
+                  {isSelected && selected && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="flex items-center gap-1.5 mt-5" 
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={(e) => updateCoverage(topping.id, "right", e)}
+                        className={`p-2 rounded-full transition-all ${selected.coverage === 'right' ? 'bg-orange-500 text-white shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                        title="צד ימין"
+                      >
+                        <div className="w-4 h-4 rounded-full border-[2.5px] border-current relative overflow-hidden">
+                          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-current opacity-80"></div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => updateCoverage(topping.id, "whole", e)}
+                        className={`p-2 rounded-full transition-all ${selected.coverage === 'whole' ? 'bg-orange-500 text-white shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                        title="כל הפיצה"
+                      >
+                        <Circle className="w-4 h-4 fill-current border-[2.5px] border-current rounded-full" />
+                      </button>
+                      <button
+                        onClick={(e) => updateCoverage(topping.id, "left", e)}
+                        className={`p-2 rounded-full transition-all ${selected.coverage === 'left' ? 'bg-orange-500 text-white shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                        title="צד שמאל"
+                      >
+                        <div className="w-4 h-4 rounded-full border-[2.5px] border-current relative overflow-hidden">
+                          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-current opacity-80"></div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleTopping(topping.id); }}
+                        className="p-2 rounded-full transition-all text-red-500 hover:bg-red-50 ml-1"
+                        title="הסר תוספת"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </motion.div>
+                  )}
+                </motion.div>
               )
             })}
           </div>
 
-          {/* In-Flow Footer Area */}
-          <div className="pb-[120px] pt-6 px-4">
-            <motion.button
-              onClick={handleAdd}
-              whileTap={{ scale: 0.9 }}
-              className="w-full max-w-[280px] mx-auto h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center gap-3 shrink-0 font-bold text-lg"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              הוספה לסל
-            </motion.button>
-          </div>
+          {/* Bottom spacing for sticky footer */}
+          <div className="h-40"></div>
         </div>
+      </div>
+
+      {/* Fixed Footer Actions */}
+      <div className="fixed bottom-[120px] left-0 right-0 px-6 z-50 pointer-events-none flex justify-center">
+        <motion.button
+          onClick={handleAdd}
+          whileTap={{ scale: 0.9 }}
+          className="w-full max-w-[280px] h-14 bg-orange-500/80 backdrop-blur-md text-white border border-white/20 rounded-full shadow-xl flex items-center justify-center gap-3 font-bold text-lg pointer-events-auto"
+        >
+          <motion.div
+            whileHover={{ x: -5 }}
+            whileTap={{ x: 15, rotate: -10 }}
+            transition={{ type: "spring", stiffness: 300, damping: 10 }}
+          >
+            <ShoppingCart className="w-5 h-5" />
+          </motion.div>
+          הוספה לסל
+        </motion.button>
       </div>
     </div>
   )

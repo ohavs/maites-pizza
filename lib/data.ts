@@ -18,5 +18,15 @@ export const pizzas = [
         image: "/images/basil.webp",
         ingredients: ["רוטב עגבניות מדויק", "מוצרלה טרייה", "בזיליקום", "שמן זית מעולה"],
         calories: 820,
+    },
+    {
+        id: 3,
+        name: "פיצה מרגריטה",
+        description: "הקלאסיקה האיטלקית המושלמת - רוטב עגבניות סן מרזנו, מוצרלה דה בופלה טרייה, בזיליקום ושמן זית כתית.",
+        price: 14.99,
+        rating: 4.7,
+        image: "/images/margherita.webp",
+        ingredients: ["רוטב סן מרזנו", "מוצרלה דה בופלה", "בזיליקום טרי", "שמן זית כתית"],
+        calories: 780,
     }
 ];

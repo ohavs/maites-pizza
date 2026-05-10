@@ -62,9 +62,21 @@ export function PizzaDetailsView({ pizza, onBack, onAddToCart, onNavigate }: Piz
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="absolute inset-0 flex items-center justify-center p-8"
+                        className="absolute inset-0 flex items-center justify-center p-4"
                     >
-                        <div className="relative w-full h-full max-w-[300px]">
+                        <motion.div 
+                            className="relative w-full h-full max-w-[360px]"
+                            drag="x"
+                            dragConstraints={{ left: 0, right: 0 }}
+                            onDragEnd={(e, { offset, velocity }) => {
+                                const swipe = offset.x;
+                                if (swipe < -50) {
+                                    onNavigate && onNavigate("pizza-details", nextPizza.id);
+                                } else if (swipe > 50) {
+                                    onNavigate && onNavigate("pizza-details", prevPizza.id);
+                                }
+                            }}
+                        >
                             <Image
                                 src={pizza.image}
                                 alt={pizza.name}
@@ -72,7 +84,7 @@ export function PizzaDetailsView({ pizza, onBack, onAddToCart, onNavigate }: Piz
                                 className="object-contain"
                                 priority
                             />
-                        </div>
+                        </motion.div>
                     </motion.div>
 
                     {/* Navigation Arrows */}
@@ -121,19 +133,28 @@ export function PizzaDetailsView({ pizza, onBack, onAddToCart, onNavigate }: Piz
                             ))}
                         </div>
                     </div>
-
-                    {/* In-Flow Footer Actions */}
-                    <div className="mt-4 flex justify-center pb-36">
-                        <motion.button
-                            onClick={handleAdd}
-                            whileTap={{ scale: 0.9 }}
-                            className="w-full max-w-[280px] h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center gap-3 shrink-0 font-bold text-lg mx-auto"
-                        >
-                            <ShoppingCart className="w-5 h-5" />
-                            הוספה לסל
-                        </motion.button>
-                    </div>
+                    
+                    {/* Bottom spacing */}
+                    <div className="h-40"></div>
                 </div>
+            </div>
+
+            {/* Fixed Footer Actions */}
+            <div className="fixed bottom-[120px] left-0 right-0 px-6 z-50 pointer-events-none flex justify-center">
+                <motion.button
+                    onClick={handleAdd}
+                    whileTap={{ scale: 0.9 }}
+                    className="w-full max-w-[280px] h-14 bg-orange-500/80 backdrop-blur-md text-white border border-white/20 rounded-full shadow-xl flex items-center justify-center gap-3 font-bold text-lg pointer-events-auto"
+                >
+                    <motion.div
+                        whileHover={{ x: -5 }}
+                        whileTap={{ x: 15, rotate: -10 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                    >
+                        <ShoppingCart className="w-5 h-5" />
+                    </motion.div>
+                    הוספה לסל
+                </motion.button>
             </div>
         </div>
     )

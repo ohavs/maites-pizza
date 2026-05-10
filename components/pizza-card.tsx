@@ -31,12 +31,12 @@ export function PizzaCard({ name, price, rating, image, isLarge = false, aspectR
       {/* Pizza image - Contained inside */}
       <div
         className={`absolute z-10 ${isLarge
-          ? "right-6 top-6 h-40 w-40"
+          ? "right-2 top-2 h-56 w-56"
           : aspectRatio === "landscape"
-            ? "right-2 top-1/2 -translate-y-1/2 h-36 w-36" // Significantly Larger for Landscape (144px)
+            ? "-right-2 top-1/2 -translate-y-1/2 h-44 w-44" // Larger for Landscape
             : aspectRatio === "square"
-              ? "left-1/2 -translate-x-1/2 top-3 h-26 w-26" // Keep square subtle
-              : "right-4 top-6 h-32 w-32"
+              ? "left-1/2 -translate-x-1/2 -top-2 h-36 w-36" // Overflow top for square
+              : "right-0 top-0 h-44 w-44"
           }`}
       >
         <motion.div
@@ -53,8 +53,8 @@ export function PizzaCard({ name, price, rating, image, isLarge = false, aspectR
       </div>
 
       {/* Content */}
-      <div className={`relative z-0 flex w-full flex-col ${aspectRatio === 'landscape' ? 'justify-center items-start pr-40' : 'justify-end'}`}>
-        {/* Increased padding-right (pr-40) for larger landscape image */}
+      <div className={`relative z-0 flex w-full flex-col ${aspectRatio === 'landscape' ? 'justify-center items-start pr-48' : 'justify-end'}`}>
+        {/* Increased padding-right for larger landscape image */}
 
         {/* Rating removed as requested */}
 

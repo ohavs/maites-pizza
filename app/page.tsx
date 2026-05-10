@@ -128,7 +128,7 @@ export default function PizzaCraftApp() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-1 flex-col h-full min-h-0"
+            className="flex flex-1 flex-col h-full min-h-0 overflow-hidden"
           >
             {activeTab === "home" && (
               <>
