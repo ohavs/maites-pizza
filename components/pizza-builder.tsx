@@ -158,7 +158,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
           </AnimatePresence>
         </div>
 
-        <div className="absolute top-[-60px] inset-x-0 mx-auto w-[125vw] max-w-[500px] aspect-square">
+        <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square" style={{ left: 0, right: 0, marginLeft: 'auto', marginRight: 'auto' }}>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
