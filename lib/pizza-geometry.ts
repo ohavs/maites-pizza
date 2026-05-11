@@ -11,7 +11,7 @@ import type { Coverage } from "./types"
  * exact horizontal/vertical center, so we can treat (~50, ~50) as the disc center safely.
  */
 export const PIZZA = {
-    centerX: 47.5,   // shifted left: the stage container overflows right on RTL screens
+    centerX: 49.5,
     centerY: 50.0,
     outerRadius: 23.0,
     sauceRadius: 17.0,
