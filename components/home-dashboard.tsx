@@ -93,22 +93,27 @@ export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden pb-[100px] min-h-0 touch-pan-y overscroll-none">
       {/* Hero Banner - Build Your Own */}
-      <div className="px-4 pt-4 mb-2 shrink-0">
+      <div className="px-4 pt-4 mb-8 shrink-0 overflow-visible relative z-10">
         <motion.div
           onClick={() => onNavigate("builder")}
           whileTap={{ scale: 0.98 }}
-          className="relative overflow-hidden rounded-[24px] bg-[#1a1a1a] shadow-xl cursor-pointer"
+          className="relative rounded-[24px] shadow-xl cursor-pointer overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #FF8C42 0%, #E85D26 50%, #C44518 100%)" }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-transparent z-10" />
-          <div className="absolute -right-16 -bottom-16 w-64 h-64 opacity-50 z-0">
-            <Image src="/images/margherita.webp" alt="Build your pizza" fill className="object-contain drop-shadow-2xl" />
+          {/* Subtle light overlay */}
+          <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 20% 60%, rgba(255,255,255,0.4) 0%, transparent 55%)" }} />
+
+          {/* Pizza image — EXTREMELY large, overflowing right and bottom, part of it off-screen */}
+          <div className="absolute pointer-events-none" style={{ width: 340, height: 340, right: -120, bottom: -80, zIndex: 30 }}>
+            <Image src="/images/margherita.webp" alt="Build your pizza" fill className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
           </div>
-          <div className="relative z-20 p-5 sm:p-6 text-white min-h-[120px] flex flex-col justify-between">
+
+          {/* Content — kept left so pizza doesn't cover it */}
+          <div className="relative z-20 p-5 sm:p-6 text-white min-h-[120px] flex flex-col justify-between" style={{ paddingRight: '45%' }}>
             <div>
-              <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold tracking-wider mb-1.5">חדש</span>
-              <h2 className="text-2xl font-black leading-tight text-white/90">פיצה בהרכבה אישית</h2>
+              <h2 className="text-2xl font-black leading-tight text-white drop-shadow-sm">פיצה בהרכבה אישית</h2>
             </div>
-            <div className="flex items-center gap-1.5 mt-2 text-orange-400 font-medium text-sm">
+            <div className="flex items-center gap-1.5 mt-2 text-white/80 font-medium text-sm">
               <span>התחל להרכיב</span>
               <ChevronLeft className="w-4 h-4" />
             </div>

@@ -17,6 +17,12 @@ const bisten = localFont({
   display: 'swap',
 });
 
+const candy = localFont({
+  src: '../fonts/candy.ttf',
+  variable: '--font-candy',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Maites Pizza',
   description: 'הזמינו את הפיצה המושלמת שלכם',
@@ -50,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl">
-      <body className={`${rubik.className} ${bisten.variable} antialiased`}>
+      <body className={`${rubik.className} ${bisten.variable} ${candy.variable} antialiased`}>
         {children}
         <PWAPrompt />
         <Analytics />

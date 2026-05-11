@@ -30,7 +30,7 @@ const searchResults = [
 ]
 
 interface SearchViewProps {
-    onNavigate: (view: string) => void
+    onNavigate: (view: string, id?: number) => void
 }
 
 export function SearchView({ onNavigate }: SearchViewProps) {
@@ -77,7 +77,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 + index * 0.1 }}
                     >
-                        <PizzaCard {...pizza} onClick={() => onNavigate("builder")} />
+                        <PizzaCard {...pizza} onClick={() => onNavigate("pizza-details", pizza.id)} />
                     </motion.div>
                 ))}
             </div>
