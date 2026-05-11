@@ -1,9 +1,9 @@
 "use client"
 
-import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
-import { SelectedTopping, Coverage, Topping } from "@/lib/types"
+import { SelectedTopping, Topping } from "@/lib/types"
 import { toppings } from "@/lib/pizza-data"
+import { generateToppingPositions } from "@/lib/pizza-geometry"
 
 interface PizzaVisualizerProps {
     selectedToppings: SelectedTopping[]
@@ -11,70 +11,7 @@ interface PizzaVisualizerProps {
 }
 
 export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizerProps) {
-
-    const getToppingPositions = (toppingId: string, index: number, coverage: Coverage) => {
-        const positions = []
-
-        // Simple seeded random to keep positions stable
-        const seededRandom = (seed: number) => {
-            const x = Math.sin(seed) * 10000
-            return x - Math.floor(x)
-        }
-
-        // Generate stable seed from toppingId only
-        const baseSeed = toppingId.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-
-        // Higher base count for better "full" look.
-        const baseCount = toppingId === 'basil' ? 8 : (15 + Math.floor(seededRandom(baseSeed) * 5))
-
-        // Adjust count based on coverage to maintain density
-        const count = coverage === 'whole' ? baseCount : Math.ceil(baseCount / 2)
-
-        for (let i = 0; i < count; i++) {
-            const itemSeed = baseSeed + i * 15 + (coverage.length * 10)
-            const rRandom = seededRandom(itemSeed)
-            const thetaRandom = seededRandom(itemSeed + 1)
-
-            // Distribution
-            // Radius: Limit to ~35%  to ensure toppings stay strictly on the pizza face
-            const r = Math.sqrt(rRandom) * 35
-
-            // Angle based on coverage with safety buffer for the split line
-            const splitBuffer = 0.3 // ~17 degrees safety zone near the middle
-            let minAngle = 0
-            let maxAngle = Math.PI * 2
-
-            if (coverage === 'left') {
-                minAngle = Math.PI / 2 + splitBuffer
-                maxAngle = 3 * Math.PI / 2 - splitBuffer
-            } else if (coverage === 'right') {
-                minAngle = -Math.PI / 2 + splitBuffer
-                maxAngle = Math.PI / 2 - splitBuffer
-            }
-
-            const theta = minAngle + thetaRandom * (maxAngle - minAngle)
-
-            const x = 50 + r * Math.cos(theta)
-            const y = 50 + r * Math.sin(theta)
-
-            const rotationRandom = seededRandom(itemSeed + 2)
-            const scaleRandom = seededRandom(itemSeed + 3)
-
-            positions.push({
-                x,
-                y,
-                rotation: rotationRandom * 360,
-                scale: 0.8 + scaleRandom * 0.4
-            })
-        }
-        return positions
-    }
-
-    // Calculate scaling factor based on base size (assuming original calc was for ~280px or percentages)
-    // The positioning logic uses percentages (50 + ...), so it scales automatically with the container width/height!
-    // We just need to scale the topping ITEM size relative to the container.
-    // In PizzaBuilder (200px container), topping is 28px (~14%).
-    // So topping size = size * 0.14
+    // Keep the topping render-size proportional to the preview, so density looks consistent.
     const toppingSize = Math.max(size * 0.14, 8)
 
     return (
@@ -100,7 +37,12 @@ export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizer
                 }
                 if (!toppingData) return null
 
-                const positions = getToppingPositions(selected.id, index, selected.coverage)
+                const positions = generateToppingPositions({
+                    toppingId: selected.id,
+                    coverage: selected.coverage,
+                    containerSize: size,
+                    toppingSize,
+                })
 
                 return (
                     <div
