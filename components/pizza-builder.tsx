@@ -236,13 +236,13 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                   onClick={() => !isSelected && toggleTopping(topping.id)}
                   whileTap={!isSelected ? { scale: 0.95 } : {}}
                   layout
-                  className={`relative flex flex-col items-center justify-center border transition-all cursor-pointer overflow-hidden ${
-                    isSelected 
-                      ? "rounded-[2rem] bg-card border-orange-500/30 shadow-md min-h-[110px] p-3" 
-                      : "rounded-full bg-transparent border-border/30 hover:bg-black/5 min-h-[60px] p-2"
+                  className={`relative flex flex-col items-center border transition-all cursor-pointer overflow-hidden ${
+                    isSelected
+                      ? "rounded-[2rem] bg-card border-orange-500/30 shadow-md min-h-[110px] py-3 px-3 justify-between gap-2"
+                      : "rounded-full bg-transparent border-border/30 hover:bg-black/5 min-h-[60px] p-2 justify-center"
                   }`}
                 >
-                  <motion.div layout className={`text-center flex flex-col items-center justify-center w-full h-full ${isSelected ? "absolute top-3" : ""}`}>
+                  <motion.div layout className="text-center w-full shrink-0">
                     <span className={`font-bold block text-foreground leading-tight transition-all ${isSelected ? "text-xs text-orange-600" : "text-base"}`}>
                       {topping.name}
                     </span>
@@ -254,11 +254,11 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                   </motion.div>
 
                   {isSelected && selected && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.1 }}
-                      className="flex items-center gap-1.5 mt-5" 
+                      className="flex items-center gap-1.5 relative z-10"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
