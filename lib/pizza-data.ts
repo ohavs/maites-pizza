@@ -1,7 +1,7 @@
 export const toppingCategories = [
-    { id: "sauce", name: "רוטב ובסיס", icon: "🍅" },
-    { id: "cheese", name: "גבינות", icon: "🧀" },
     { id: "veggies", name: "ירקות", icon: "🥬" },
+    { id: "cheese", name: "גבינות", icon: "🧀" },
+    { id: "sauce", name: "רוטב ובסיס", icon: "🍅" },
 ]
 
 export const toppings = {

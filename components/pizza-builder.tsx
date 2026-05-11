@@ -28,7 +28,7 @@ interface PizzaBuilderProps {
 }
 
 export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialToppings, editingItem }: PizzaBuilderProps) {
-  const [selectedCategory, setSelectedCategory] = useState("sauce")
+  const [selectedCategory, setSelectedCategory] = useState("veggies")
   const [selectedToppings, setSelectedToppings] = useState<SelectedTopping[]>(initialToppings || [])
   const [expandedToppingId, setExpandedToppingId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(editingItem?.quantity || 1)
@@ -158,7 +158,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
           </AnimatePresence>
         </div>
 
-        <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square" style={{ left: 0, right: 0, marginLeft: 'auto', marginRight: 'auto' }}>
+        <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square" style={{ left: '50%', transform: 'translateX(-50%)' }}>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
