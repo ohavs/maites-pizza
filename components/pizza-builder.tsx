@@ -8,6 +8,17 @@ import { CartItem, Coverage, SelectedTopping, Topping } from "@/lib/types"
 import { toppings, toppingCategories } from "@/lib/pizza-data"
 import { generateToppingPositions } from "@/lib/pizza-geometry"
 
+function CoverageIcon({ coverage }: { coverage: Coverage }) {
+  if (coverage === "whole") {
+    return <div className="w-3 h-3 rounded-full bg-orange-500 shrink-0" aria-label="כל הפיצה" />
+  }
+  return (
+    <div className="w-3 h-3 rounded-full border-[1.5px] border-orange-500 relative overflow-hidden shrink-0" aria-label={coverage === "right" ? "צד ימין" : "צד שמאל"}>
+      <div className={`absolute ${coverage === "right" ? "right-0" : "left-0"} top-0 bottom-0 w-1/2 bg-orange-500`} />
+    </div>
+  )
+}
+
 interface PizzaBuilderProps {
   onBack: () => void
   onAddToCart?: (item: CartItem) => void
@@ -19,6 +30,7 @@ interface PizzaBuilderProps {
 export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialToppings, editingItem }: PizzaBuilderProps) {
   const [selectedCategory, setSelectedCategory] = useState("sauce")
   const [selectedToppings, setSelectedToppings] = useState<SelectedTopping[]>(initialToppings || [])
+  const [expandedToppingId, setExpandedToppingId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(editingItem?.quantity || 1)
 
   const basePrice = 12.99
@@ -43,10 +55,20 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       const exists = prev.find(t => t.id === toppingId)
       if (exists) {
         return prev.filter(t => t.id !== toppingId)
-      } else {
-        return [...prev, { id: toppingId, coverage: "whole" }]
       }
+      return [...prev, { id: toppingId, coverage: "whole" }]
     })
+    // When adding a new topping, expand it for configuration; when removing, collapse.
+    setExpandedToppingId((curr) => {
+      const wasSelected = selectedToppings.some(t => t.id === toppingId)
+      if (wasSelected) return curr === toppingId ? null : curr
+      return toppingId
+    })
+  }
+
+  const removeTopping = (toppingId: string) => {
+    setSelectedToppings(prev => prev.filter(t => t.id !== toppingId))
+    setExpandedToppingId(curr => (curr === toppingId ? null : curr))
   }
 
   const updateCoverage = (toppingId: string, coverage: Coverage, e: React.MouseEvent) => {
@@ -105,6 +127,37 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
 
       {/* Pizza Stage */}
       <div className="relative flex-none h-[380px] flex items-center justify-center overflow-visible shrink-0 z-0">
+        {/* Selected toppings legend — pinned to the right edge of the screen */}
+        <div className="absolute right-2 top-12 z-20 flex flex-col gap-1.5 max-h-[280px] overflow-y-auto scrollbar-hide pointer-events-none">
+          <AnimatePresence>
+            {selectedToppings.map((selected) => {
+              let toppingData: Topping | null = null
+              for (const category of Object.values(toppings)) {
+                // @ts-ignore
+                const found = category.find((t) => t.id === selected.id)
+                if (found) { toppingData = found; break }
+              }
+              if (!toppingData) return null
+              return (
+                <motion.div
+                  key={selected.id}
+                  layout
+                  initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 20, scale: 0.8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                  className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md border border-orange-500/30 rounded-full pl-2 pr-2 py-1 shadow-sm pointer-events-auto"
+                >
+                  <CoverageIcon coverage={selected.coverage} />
+                  <span className="text-[11px] font-semibold text-orange-700 whitespace-nowrap">
+                    {toppingData.name}
+                  </span>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </div>
+
         <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -229,21 +282,36 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
             {currentToppings.map((topping: any) => {
               const selected = selectedToppings.find(t => t.id === topping.id)
               const isSelected = !!selected
+              const isExpanded = isSelected && expandedToppingId === topping.id
+
+              const handleCapsuleClick = () => {
+                if (!isSelected) {
+                  toggleTopping(topping.id)
+                } else if (isExpanded) {
+                  setExpandedToppingId(null)
+                } else {
+                  setExpandedToppingId(topping.id)
+                }
+              }
 
               return (
                 <motion.div
                   key={topping.id}
-                  onClick={() => !isSelected && toggleTopping(topping.id)}
-                  whileTap={!isSelected ? { scale: 0.95 } : {}}
+                  onClick={handleCapsuleClick}
+                  whileTap={{ scale: 0.97 }}
                   layout
                   className={`relative flex flex-col items-center border transition-all cursor-pointer overflow-hidden ${
-                    isSelected
-                      ? "rounded-[2rem] bg-card border-orange-500/30 shadow-md min-h-[110px] py-3 px-3 justify-between gap-2"
-                      : "rounded-full bg-transparent border-border/30 hover:bg-black/5 min-h-[60px] p-2 justify-center"
+                    isExpanded
+                      ? "rounded-[2rem] bg-card border-orange-500/40 shadow-md min-h-[110px] py-3 px-3 justify-between gap-2"
+                      : isSelected
+                        ? "rounded-full bg-orange-500/10 border-orange-500/50 min-h-[60px] p-2 justify-center"
+                        : "rounded-full bg-transparent border-border/30 hover:bg-black/5 min-h-[60px] p-2 justify-center"
                   }`}
                 >
                   <motion.div layout className="text-center w-full shrink-0">
-                    <span className={`font-bold block text-foreground leading-tight transition-all ${isSelected ? "text-xs text-orange-600" : "text-base"}`}>
+                    <span className={`font-bold block leading-tight transition-all ${
+                      isExpanded ? "text-xs text-orange-600" : isSelected ? "text-base text-orange-700" : "text-base text-foreground"
+                    }`}>
                       {topping.name}
                     </span>
                     {!isSelected && (
@@ -253,7 +321,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                     )}
                   </motion.div>
 
-                  {isSelected && selected && (
+                  {isExpanded && selected && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -287,7 +355,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                         </div>
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); toggleTopping(topping.id); }}
+                        onClick={(e) => { e.stopPropagation(); removeTopping(topping.id) }}
                         className="p-2 rounded-full transition-all text-red-500 hover:bg-red-50 ml-1"
                         title="הסר תוספת"
                       >
