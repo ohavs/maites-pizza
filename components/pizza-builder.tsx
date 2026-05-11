@@ -149,7 +149,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                   className="flex items-center gap-1.5 pointer-events-none"
                 >
                   <CoverageIcon coverage={selected.coverage} />
-                  <span className="text-[11px] font-semibold text-white whitespace-nowrap" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
+                  <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">
                     {toppingData.name}
                   </span>
                 </motion.div>
@@ -158,7 +158,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
           </AnimatePresence>
         </div>
 
-        <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square">
+        <div className="absolute top-[-60px] left-1/2 -translate-x-1/2 w-[125vw] max-w-[500px] aspect-square">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
