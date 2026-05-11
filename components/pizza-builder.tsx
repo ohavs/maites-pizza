@@ -146,10 +146,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: 20, scale: 0.8 }}
                   transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                  className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md border border-orange-500/30 rounded-full pl-2 pr-2 py-1 shadow-sm pointer-events-auto"
+                  className="flex items-center gap-1.5 pointer-events-none"
                 >
                   <CoverageIcon coverage={selected.coverage} />
-                  <span className="text-[11px] font-semibold text-orange-700 whitespace-nowrap">
+                  <span className="text-[11px] font-semibold text-white whitespace-nowrap" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
                     {toppingData.name}
                   </span>
                 </motion.div>
