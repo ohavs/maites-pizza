@@ -6,6 +6,7 @@ import { ChevronRight, Plus, Circle, Trash2, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { CartItem, Coverage, SelectedTopping, Topping } from "@/lib/types"
 import { toppings, toppingCategories } from "@/lib/pizza-data"
+import { generateToppingPositions } from "@/lib/pizza-geometry"
 
 interface PizzaBuilderProps {
   onBack: () => void
@@ -82,68 +83,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
 
   const currentToppings = toppings[selectedCategory as keyof typeof toppings]
 
-  const getToppingPositions = (toppingId: string, index: number, coverage: Coverage) => {
-    const positions = []
-
-    // Simple seeded random to keep positions stable
-    const seededRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000
-      return x - Math.floor(x)
-    }
-
-    // Generate stable seed from toppingId only
-    const baseSeed = toppingId.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-
-    // Higher base count for better "full" look.
-    const baseCount = toppingId === 'basil' ? 8 : (15 + Math.floor(seededRandom(baseSeed) * 5))
-
-    // Adjust count based on coverage to maintain density
-    const count = coverage === 'whole' ? baseCount : Math.ceil(baseCount / 2)
-
-    for (let i = 0; i < count; i++) {
-      const itemSeed = baseSeed + i * 15 + (coverage.length * 10)
-      const rRandom = seededRandom(itemSeed)
-      const thetaRandom = seededRandom(itemSeed + 1)
-
-      // Distribution
-      // The margherita.webp has ~15% transparent padding on each side.
-      // The actual pizza disc occupies roughly 70% of the image width.
-      // We use radius 31 to keep toppings tight within the crust.
-      const r = Math.sqrt(rRandom) * 31
-
-      // Angle based on coverage with safety buffer for the split line
-      // Since X=0 is Left and X=100 is Right:
-      // 'right' coverage (X > 50) means Math.cos(theta) > 0 -> angles between -PI/2 and PI/2
-      // 'left' coverage (X < 50) means Math.cos(theta) < 0 -> angles between PI/2 and 3PI/2
-      const splitBuffer = 0.05 // Small safety zone near the middle
-      let minAngle = 0
-      let maxAngle = Math.PI * 2
-
-      if (coverage === 'left') {
-        minAngle = Math.PI / 2 + splitBuffer
-        maxAngle = 3 * Math.PI / 2 - splitBuffer
-      } else if (coverage === 'right') {
-        minAngle = -Math.PI / 2 + splitBuffer
-        maxAngle = Math.PI / 2 - splitBuffer
-      }
-
-      const theta = minAngle + thetaRandom * (maxAngle - minAngle)
-
-      const x = 50 + r * Math.cos(theta)
-      const y = 50 + r * Math.sin(theta)
-
-      const rotationRandom = seededRandom(itemSeed + 2)
-      const scaleRandom = seededRandom(itemSeed + 3)
-
-      positions.push({
-        x,
-        y,
-        rotation: rotationRandom * 360,
-        scale: 0.8 + scaleRandom * 0.4
-      })
-    }
-    return positions
-  }
+  // The pizza stage container is max-width 500px (`w-[125vw] max-w-[500px]`), aspect-square.
+  // Toppings are rendered at 32px. These values feed the geometry helper so toppings stay on the sauce.
+  const STAGE_CONTAINER_PX = 500
+  const TOPPING_RENDER_PX = 32
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background h-full relative">
@@ -190,7 +133,12 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
               }
               if (!toppingData) return null
 
-              const positions = getToppingPositions(selected.id, index, selected.coverage)
+              const positions = generateToppingPositions({
+                toppingId: selected.id,
+                coverage: selected.coverage,
+                containerSize: STAGE_CONTAINER_PX,
+                toppingSize: TOPPING_RENDER_PX,
+              })
 
               return (
                 <motion.div
