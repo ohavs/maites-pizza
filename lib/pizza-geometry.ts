@@ -59,9 +59,13 @@ export interface ToppingLayoutInput {
 export function generateToppingPositions(input: ToppingLayoutInput): ToppingPosition[] {
     const { toppingId, coverage, containerSize, toppingSize, baseCount } = input
 
-    // Margin so the topping image (which has its own padding) sits fully inside the sauce.
-    // Use ~40% of the rendered topping size as the inset (the visible art is smaller than the bbox).
-    const toppingMarginPct = (toppingSize * 0.4 / Math.max(containerSize, 1)) * 100
+    // Margin so the topping image sits fully inside the sauce zone.
+    // The topping bounding-box is always a fixed pixel size regardless of container,
+    // so we compute the margin as half the topping's pixel width expressed as a % of
+    // the ACTUAL container — then double it for safety so the visible art never clips
+    // onto the crust even on small phones where the container is only ~470px.
+    const toppingHalfWidthPct = (toppingSize / 2 / Math.max(containerSize, 1)) * 100
+    const toppingMarginPct = toppingHalfWidthPct * 2   // = full topping width as %
     const placementRadius = Math.max(PIZZA.sauceRadius - toppingMarginPct, 3)
 
     const seed = hashString(toppingId)
