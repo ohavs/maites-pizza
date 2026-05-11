@@ -69,8 +69,9 @@ export function generateToppingPositions(input: ToppingLayoutInput): ToppingPosi
     const wholeCount = baseCount ?? defaultCount
     const count = coverage === "whole" ? wholeCount : Math.max(Math.ceil(wholeCount / 2), 4)
 
-    // Half-pizza buffer (angular gap near vertical split line, in radians).
-    const splitBuffer = 0.18
+    // Minimum distance (in % of container) from the vertical split line for half-coverage.
+    // Without this, points with cos(θ) ≈ 0 cluster at the middle of the pizza and "left" looks central.
+    const splitGap = 1.8
 
     const positions: ToppingPosition[] = []
 
@@ -78,49 +79,44 @@ export function generateToppingPositions(input: ToppingLayoutInput): ToppingPosi
     const jitterMag = Math.min(placementRadius * 0.06, 0.9)
 
     for (let i = 0; i < count; i++) {
-        // Sunflower: uniform area distribution.
+        // Sunflower: uniform area distribution within a disc of radius `placementRadius`.
         const t = (i + 0.5) / count
         const r = Math.sqrt(t) * placementRadius
         const sunflowerAngle = i * GOLDEN_ANGLE + seed * 0.017
 
-        let theta: number
-        if (coverage === "whole") {
-            theta = sunflowerAngle
-        } else {
-            // Map sunflowerAngle (any real) deterministically into the desired half-disc arc.
-            const norm = ((sunflowerAngle % Math.PI) + Math.PI) % Math.PI // [0, PI)
-            const arc = Math.PI - 2 * splitBuffer
-            if (coverage === "right") {
-                // Right side: cos(theta) > 0  ⇒ theta in (-PI/2, PI/2)
-                theta = -Math.PI / 2 + splitBuffer + norm * (arc / Math.PI)
-            } else {
-                // Left side: cos(theta) < 0  ⇒ theta in (PI/2, 3PI/2)
-                theta = Math.PI / 2 + splitBuffer + norm * (arc / Math.PI)
-            }
+        let dx = r * Math.cos(sunflowerAngle)
+        let dy = r * Math.sin(sunflowerAngle)
+
+        if (coverage !== "whole") {
+            // Map the full-disc x to one side of the pizza with a hard minimum offset from the
+            // split line. |dx| ∈ [0, R] → [splitGap, R], preserving relative density across the half.
+            const sign = coverage === "right" ? 1 : -1
+            const usableWidth = Math.max(placementRadius - splitGap, 1)
+            dx = sign * (splitGap + Math.abs(dx) * (usableWidth / placementRadius))
         }
 
         const jx = (seededRandom(seed + i * 3.71) - 0.5) * jitterMag
         const jy = (seededRandom(seed + i * 7.13) - 0.5) * jitterMag
 
-        let x = PIZZA.centerX + r * Math.cos(theta) + jx
-        let y = PIZZA.centerY + r * Math.sin(theta) + jy
+        let x = PIZZA.centerX + dx + jx
+        let y = PIZZA.centerY + dy + jy
 
-        // Clamp inside the sauce circle as a final safety net (e.g. jitter pushed near the edge).
-        const dx = x - PIZZA.centerX
-        const dy = y - PIZZA.centerY
-        const dist = Math.sqrt(dx * dx + dy * dy)
+        // Clamp inside the sauce circle as a final safety net.
+        const cdx = x - PIZZA.centerX
+        const cdy = y - PIZZA.centerY
+        const dist = Math.sqrt(cdx * cdx + cdy * cdy)
         if (dist > placementRadius) {
             const k = placementRadius / dist
-            x = PIZZA.centerX + dx * k
-            y = PIZZA.centerY + dy * k
+            x = PIZZA.centerX + cdx * k
+            y = PIZZA.centerY + cdy * k
         }
 
-        // For half coverage, also enforce the split line on the X-axis as a hard guarantee.
+        // Hard guarantee on side for half coverage (in case jitter pushed across the line).
         if (coverage === "right") {
-            const minX = PIZZA.centerX + 0.5
+            const minX = PIZZA.centerX + splitGap
             if (x < minX) x = minX
         } else if (coverage === "left") {
-            const maxX = PIZZA.centerX - 0.5
+            const maxX = PIZZA.centerX - splitGap
             if (x > maxX) x = maxX
         }
 
