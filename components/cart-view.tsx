@@ -23,8 +23,12 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-background">
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-40 pt-6">
-                <h1 className="mb-6 text-2xl font-bold text-foreground">ההזמנה שלי</h1>
+            <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto pb-44 pt-6"
+                style={{ overflowX: "clip" }}
+            >
+                <h1 className="mb-2 px-6 text-2xl font-bold text-foreground">ההזמנה שלי</h1>
 
                 {items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 text-center mt-20">
@@ -35,42 +39,56 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                         <p className="mt-2 text-sm text-muted-foreground">הוסיפו כמה פיצות טעימות כדי להתחיל</p>
                     </div>
                 ) : (
-                    <div className="space-y-5">
+                    <AnimatePresence initial={false}>
                         {items.map((item, index) => (
                             <motion.div
                                 key={item.id}
                                 layout
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 24 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, x: -40, transition: { duration: 0.2 } }}
-                                transition={{ delay: index * 0.08, type: "spring", stiffness: 320, damping: 26 }}
-                                className="relative flex items-center gap-3 rounded-[26px] bg-card p-4 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-border/20"
+                                exit={{ opacity: 0, x: 90, transition: { duration: 0.22 } }}
+                                transition={{ delay: index * 0.07, type: "spring", stiffness: 300, damping: 28 }}
                             >
-                                {/* Pizza — extends past the card edges for a tactile, 3D feel.
-                                    No background box: the transparent PNG sits directly on the page. */}
-                                <div
-                                    className="relative h-[124px] w-[124px] -ms-5 -my-6 shrink-0"
-                                    style={{ filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.18))" }}
-                                >
-                                    {item.customToppings ? (
-                                        <PizzaVisualizer selectedToppings={item.customToppings} size={124} />
-                                    ) : (
-                                        <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
-                                    )}
-                                </div>
+                                {/* Item row — pizza bleeds off the right (inline-start) edge */}
+                                <div className="relative flex items-center py-4 border-b border-border/15 last:border-b-0">
+                                    {/* Pizza — very large, partially off-screen to the right */}
+                                    <div
+                                        className="relative shrink-0"
+                                        style={{
+                                            width: 215,
+                                            height: 215,
+                                            marginInlineStart: -52,
+                                            filter: "drop-shadow(0 14px 30px rgba(0,0,0,0.22))",
+                                        }}
+                                    >
+                                        {item.customToppings ? (
+                                            <PizzaVisualizer selectedToppings={item.customToppings} size={215} />
+                                        ) : (
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="w-full h-full object-contain"
+                                            />
+                                        )}
+                                    </div>
 
-                                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                                    <h3 className="font-bold text-foreground leading-tight">{item.name}</h3>
+                                    {/* Info — fills the left portion of the row */}
+                                    <div className="flex-1 flex flex-col gap-1.5 pe-5">
+                                        <h3 className="text-[17px] font-black text-foreground leading-tight">
+                                            {item.name}
+                                        </h3>
 
-                                    {item.toppings.length > 0 && (
-                                        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                                            {item.toppings.join(", ")}
+                                        {item.toppings.length > 0 && (
+                                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                                                {item.toppings.join(", ")}
+                                            </p>
+                                        )}
+
+                                        <p className="text-[22px] font-extrabold text-primary mt-0.5 tabular-nums">
+                                            ₪{(item.price * item.quantity).toFixed(2)}
                                         </p>
-                                    )}
 
-                                    <div className="flex items-center justify-between mt-1.5">
-                                        <p className="text-lg font-extrabold text-primary">₪{(item.price * item.quantity).toFixed(2)}</p>
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-2 mt-0.5">
                                             {item.customToppings && onEditItem && (
                                                 <motion.button
                                                     onClick={() => onEditItem(item)}
@@ -94,7 +112,7 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                                 </div>
                             </motion.div>
                         ))}
-                    </div>
+                    </AnimatePresence>
                 )}
             </div>
 
@@ -104,7 +122,7 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                     <div className="rounded-[30px] bg-white/90 backdrop-blur-xl border border-white/20 p-4 shadow-2xl">
                         <div className="mb-3 flex items-center justify-between px-2">
                             <span className="text-muted-foreground text-sm">סה"כ לתשלום</span>
-                            <span className="text-xl font-bold text-foreground">₪{total.toFixed(2)}</span>
+                            <span className="text-xl font-bold text-foreground tabular-nums">₪{total.toFixed(2)}</span>
                         </div>
                         <motion.button
                             whileTap={{ scale: 0.98 }}
@@ -118,8 +136,7 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                 </div>
             )}
 
-            {/* Remove-confirmation modal — built in the app's overlay style:
-                blurred backdrop, rounded card, orange-friendly typography. */}
+            {/* Remove-confirmation modal */}
             <AnimatePresence>
                 {confirmingItem && (
                     <motion.div
