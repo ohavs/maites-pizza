@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { motion, AnimatePresence, useMotionValue, animate as fmAnimate, useTransform } from "framer-motion"
-import { X, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, ShoppingCart, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { CartItem } from "@/lib/types"
 import { pizzas } from "@/lib/data"
@@ -29,6 +29,8 @@ export function PizzaDetailsOverlay({ pizzaId, onClose, onAddToCart }: PizzaDeta
     const queuedDir = useRef<number | null>(null)
     const activeIndexRef = useRef(activeIndex)
     activeIndexRef.current = activeIndex
+    const [justAdded, setJustAdded] = useState(false)
+    const justAddedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const count = pizzas.length
     const getIndex = (i: number) => ((i % count) + count) % count
@@ -102,6 +104,9 @@ export function PizzaDetailsOverlay({ pizzaId, onClose, onAddToCart }: PizzaDeta
             image: activePizza.image,
         }
         onAddToCart(newItem)
+        if (justAddedTimer.current) clearTimeout(justAddedTimer.current)
+        setJustAdded(true)
+        justAddedTimer.current = setTimeout(() => setJustAdded(false), 1400)
     }
 
     const slots = [-2, -1, 0, 1, 2]
@@ -235,16 +240,48 @@ export function PizzaDetailsOverlay({ pizzaId, onClose, onAddToCart }: PizzaDeta
                     {/* Add to Cart Button */}
                     <motion.button
                         onClick={handleAdd}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-full mt-4 h-14 bg-orange-500/85 backdrop-blur-md text-white border border-white/25 rounded-full shadow-xl flex items-center justify-center gap-3 font-bold text-lg"
+                        whileTap={{ scale: 0.96 }}
+                        animate={{
+                            backgroundColor: justAdded ? "rgba(34, 197, 94, 0.92)" : "rgba(249, 115, 22, 0.85)",
+                        }}
+                        transition={{ duration: 0.25 }}
+                        className="w-full mt-4 h-14 backdrop-blur-md text-white border border-white/25 rounded-full shadow-xl flex items-center px-5 overflow-hidden"
                     >
-                        <motion.div
-                            whileTap={{ x: 15, rotate: -10 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                        >
-                            <ShoppingCart className="w-5 h-5" />
-                        </motion.div>
-                        הוספה לסל
+                        <AnimatePresence mode="wait" initial={false}>
+                            {justAdded ? (
+                                <motion.div
+                                    key="added"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center justify-center gap-2 w-full"
+                                >
+                                    <CheckCircle className="w-5 h-5" />
+                                    <span className="font-bold text-lg">נוסף לסל!</span>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="default"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center justify-between w-full"
+                                >
+                                    <motion.div
+                                        whileTap={{ x: 15, rotate: -10 }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                                    >
+                                        <ShoppingCart className="w-5 h-5" />
+                                    </motion.div>
+                                    <span className="font-bold text-lg">הוספה לסל</span>
+                                    <span className="bg-white/20 rounded-full px-3 py-1 text-sm font-bold tabular-nums">
+                                        ₪{activePizza.price.toFixed(2)}
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </motion.button>
                 </div>
             </motion.div>

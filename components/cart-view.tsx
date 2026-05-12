@@ -25,10 +25,10 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
         <div className="flex-1 flex flex-col overflow-hidden bg-background">
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto pb-44 pt-6"
+                className="flex-1 overflow-y-auto pb-[260px] pt-6"
                 style={{ overflowX: "clip" }}
             >
-                <h1 className="mb-2 px-6 text-2xl font-bold text-foreground">ההזמנה שלי</h1>
+                <h1 className="mb-3 px-6 text-2xl font-bold text-foreground">ההזמנה שלי</h1>
 
                 {items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 text-center mt-20">
@@ -47,22 +47,22 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                                 initial={{ opacity: 0, y: 24 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, x: 90, transition: { duration: 0.22 } }}
-                                transition={{ delay: index * 0.07, type: "spring", stiffness: 300, damping: 28 }}
+                                transition={{ delay: index * 0.06, type: "spring", stiffness: 300, damping: 28 }}
                             >
                                 {/* Item row — pizza bleeds off the right (inline-start) edge */}
-                                <div className="relative flex items-center py-4 border-b border-border/15 last:border-b-0">
-                                    {/* Pizza — very large, partially off-screen to the right */}
+                                <div className="relative flex items-center py-1 border-b border-border/15 last:border-b-0">
+                                    {/* Pizza — large, partially off-screen to the right */}
                                     <div
                                         className="relative shrink-0"
                                         style={{
-                                            width: 215,
-                                            height: 215,
-                                            marginInlineStart: -52,
-                                            filter: "drop-shadow(0 14px 30px rgba(0,0,0,0.22))",
+                                            width: 180,
+                                            height: 180,
+                                            marginInlineStart: -42,
+                                            filter: "drop-shadow(0 12px 26px rgba(0,0,0,0.22))",
                                         }}
                                     >
                                         {item.customToppings ? (
-                                            <PizzaVisualizer selectedToppings={item.customToppings} size={215} />
+                                            <PizzaVisualizer selectedToppings={item.customToppings} size={180} />
                                         ) : (
                                             <img
                                                 src={item.image}
@@ -72,41 +72,34 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                                         )}
                                     </div>
 
-                                    {/* Info — fills the left portion of the row */}
-                                    <div className="flex-1 flex flex-col gap-1.5 pe-5">
-                                        <h3 className="text-[17px] font-black text-foreground leading-tight">
+                                    {/* Info — 2 rows: name, then price + actions */}
+                                    <div className="flex-1 flex flex-col justify-center gap-2 pe-5 min-w-0">
+                                        <h3 className="text-[16px] font-bold text-foreground leading-tight line-clamp-2">
                                             {item.name}
                                         </h3>
 
-                                        {item.toppings.length > 0 && (
-                                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                                                {item.toppings.join(", ")}
-                                            </p>
-                                        )}
-
-                                        <p className="text-[22px] font-extrabold text-primary mt-0.5 tabular-nums">
-                                            ₪{(item.price * item.quantity).toFixed(2)}
-                                        </p>
-
-                                        <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[14px] font-bold text-primary tabular-nums">
+                                                ₪{(item.price * item.quantity).toFixed(2)}
+                                            </span>
+                                            <motion.button
+                                                onClick={() => setConfirmingId(item.id)}
+                                                whileTap={{ scale: 0.88 }}
+                                                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                                                title="הסר"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </motion.button>
                                             {item.customToppings && onEditItem && (
                                                 <motion.button
                                                     onClick={() => onEditItem(item)}
                                                     whileTap={{ scale: 0.88 }}
-                                                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                                                     title="ערוך פיצה"
                                                 >
-                                                    <Pencil className="h-4 w-4" />
+                                                    <Pencil className="h-3.5 w-3.5" />
                                                 </motion.button>
                                             )}
-                                            <motion.button
-                                                onClick={() => setConfirmingId(item.id)}
-                                                whileTap={{ scale: 0.88 }}
-                                                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                                                title="הסר"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </motion.button>
                                         </div>
                                     </div>
                                 </div>
@@ -116,9 +109,9 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                 )}
             </div>
 
-            {/* Checkout Bar */}
+            {/* Checkout Bar — fixed above bottom nav with comfortable clearance */}
             {items.length > 0 && (
-                <div className="absolute bottom-28 left-6 right-6 z-40">
+                <div className="fixed bottom-32 left-6 right-6 z-40">
                     <div className="rounded-[30px] bg-white/90 backdrop-blur-xl border border-white/20 p-4 shadow-2xl">
                         <div className="mb-3 flex items-center justify-between px-2">
                             <span className="text-muted-foreground text-sm">סה"כ לתשלום</span>

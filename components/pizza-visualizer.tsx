@@ -12,7 +12,8 @@ interface PizzaVisualizerProps {
 
 export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizerProps) {
     // Keep the topping render-size proportional to the preview, so density looks consistent.
-    const toppingSize = Math.max(size * 0.14, 8)
+    // Slightly larger ratio so toppings remain readable at small preview sizes (cart, etc.).
+    const toppingSize = Math.max(size * 0.17, 10)
 
     // Base image follows the selected sauce, same logic as PizzaBuilder.
     const selectedSauceId = selectedToppings.find(t =>
