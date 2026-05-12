@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { Search } from "lucide-react"
 import { PizzaCard } from "./pizza-card"
@@ -34,8 +35,11 @@ interface SearchViewProps {
 }
 
 export function SearchView({ onNavigate }: SearchViewProps) {
+    const scrollRef = useRef<HTMLDivElement>(null)
+    useEffect(() => { scrollRef.current?.scrollTo(0, 0) }, [])
+
     return (
-        <div className="flex-1 overflow-y-auto px-6 pb-32 pt-6">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-32 pt-6">
             <h1 className="mb-6 text-2xl font-bold text-foreground">חיפוש</h1>
 
             {/* Search Input */}
