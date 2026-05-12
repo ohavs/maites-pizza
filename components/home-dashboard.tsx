@@ -93,7 +93,12 @@ export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden pb-[100px] min-h-0 touch-pan-y overscroll-none">
       {/* Hero Banner - Build Your Own */}
-      <div className="px-4 pt-4 mb-8 shrink-0 overflow-visible relative z-10">
+      <motion.div
+        className="px-4 pt-4 mb-8 shrink-0 overflow-visible relative z-10"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      >
         <motion.div
           onClick={() => onNavigate("builder")}
           whileTap={{ scale: 0.98 }}
@@ -119,10 +124,15 @@ export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Carousel Section */}
-      <div className="flex-1 flex flex-col shrink min-h-0 overflow-hidden relative">
+      <motion.div
+        className="flex-1 flex flex-col shrink min-h-0 overflow-hidden relative"
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.32, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div className="flex items-center justify-between px-4 shrink-0 z-20 relative">
           <h2 className="text-xl font-bold text-foreground">מומלצות בשבילך</h2>
           <button onClick={() => onNavigate("menu")} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -192,7 +202,7 @@ export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
