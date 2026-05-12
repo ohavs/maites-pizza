@@ -10,7 +10,6 @@ import { SearchView } from "@/components/search-view"
 import { CartView } from "@/components/cart-view"
 import { ProfileView } from "@/components/profile-view"
 import { PizzaDetailsOverlay } from "@/components/pizza-details-overlay"
-import { IntroAnimation } from "@/components/intro-animation"
 import { pizzas } from "@/lib/data"
 import { CartItem } from "@/lib/types"
 
@@ -19,7 +18,6 @@ export default function PizzaCraftApp() {
   const [currentView, setCurrentView] = useState<"home" | "builder">("home")
   const [selectedPizzaId, setSelectedPizzaId] = useState<number | null>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [hasPlayedIntro, setHasPlayedIntro] = useState(false)
 
   // State for editing cart item
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
@@ -126,15 +124,6 @@ export default function PizzaCraftApp() {
               handleAddToCart(item)
             }}
           />
-        )}
-      </AnimatePresence>
-
-      {/* Intro Animation — full-screen overlay shown once on first load.
-          Sits above everything else (z-200) so the rest of the app can mount
-          underneath and play its own staggered entrance as this fades out. */}
-      <AnimatePresence>
-        {!hasPlayedIntro && (
-          <IntroAnimation key="intro" onComplete={() => setHasPlayedIntro(true)} />
         )}
       </AnimatePresence>
 

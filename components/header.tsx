@@ -2,17 +2,35 @@
 
 import { motion } from "framer-motion"
 
+const LETTERS = "MAITES".split("")
+const PER_CHAR_DELAY = 0.07
+
 export function Header() {
   return (
-    <motion.div
-      className="flex items-center justify-center px-6 pt-10 pb-4"
-      initial={{ opacity: 0, y: -16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <h1 className="text-6xl font-black tracking-widest font-bisten uppercase mt-4 mb-2" style={{ color: '#fb5315' }}>
-        Maites
+    <div className="flex items-center justify-center px-6 pt-10 pb-4">
+      {/* dir="ltr" forces left-to-right letter order — without it the
+          page's dir="rtl" reverses the typed letters into "SETIAM". */}
+      <h1
+        dir="ltr"
+        className="text-6xl font-black tracking-widest font-bisten uppercase mt-4 mb-2"
+        style={{ color: '#fb5315' }}
+      >
+        {LETTERS.map((letter, i) => (
+          <motion.span
+            key={i}
+            className="inline-block"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: i * PER_CHAR_DELAY,
+              duration: 0.22,
+              ease: "easeOut",
+            }}
+          >
+            {letter}
+          </motion.span>
+        ))}
       </h1>
-    </motion.div>
+    </div>
   )
 }
