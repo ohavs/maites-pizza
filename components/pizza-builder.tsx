@@ -19,68 +19,6 @@ function CoverageIcon({ coverage }: { coverage: Coverage }) {
   )
 }
 
-// Hand-placed pepperoni positions for each coverage variant (% of icon).
-// Asymmetric placement reads more "organic pizza" than perfect symmetry.
-const COVERAGE_DOTS: Record<Coverage, [number, number][]> = {
-  whole: [[50, 28], [28, 50], [72, 50], [38, 74], [64, 70]],
-  left:  [[28, 30], [22, 55], [38, 48], [30, 76], [42, 38]],
-  right: [[72, 30], [78, 55], [62, 48], [70, 76], [58, 38]],
-}
-
-function CoveragePizzaButton({
-  coverage,
-  selected,
-  onClick,
-  title,
-}: {
-  coverage: Coverage
-  selected: boolean
-  onClick: (e: React.MouseEvent) => void
-  title: string
-}) {
-  return (
-    <motion.button
-      onClick={onClick}
-      title={title}
-      whileTap={{ scale: 0.9 }}
-      animate={{ scale: selected ? 1.08 : 1 }}
-      transition={{ type: "spring", stiffness: 420, damping: 24 }}
-      className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-shadow ${
-        selected
-          ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-card shadow-[0_4px_14px_rgba(251,87,21,0.35)]"
-          : "ring-1 ring-border/40"
-      }`}
-    >
-      <div
-        className="relative w-8 h-8 rounded-full overflow-hidden"
-        style={{
-          background: selected
-            ? "radial-gradient(circle at 35% 30%, #FFE9B8 0%, #FFD494 60%, #C99366 100%)"
-            : "radial-gradient(circle at 35% 30%, #EFE3CC 0%, #D9C29B 60%, #9C8062 100%)",
-          boxShadow: selected
-            ? "inset 0 -2px 4px rgba(180, 100, 40, 0.25)"
-            : "inset 0 -1px 2px rgba(100, 70, 40, 0.15)",
-        }}
-      >
-        {COVERAGE_DOTS[coverage].map(([x, y], i) => (
-          <div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              left: `${x}%`,
-              top: `${y}%`,
-              width: "6px",
-              height: "6px",
-              transform: "translate(-50%, -50%)",
-              background: selected ? "#C0392B" : "#8a6e5c",
-              boxShadow: selected ? "0 1px 1px rgba(0,0,0,0.25)" : "none",
-            }}
-          />
-        ))}
-      </div>
-    </motion.button>
-  )
-}
 
 interface PizzaBuilderProps {
   onBack: () => void
@@ -402,24 +340,21 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                       className="flex items-center gap-2 relative z-10"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <CoveragePizzaButton
-                        coverage="right"
-                        selected={selected.coverage === "right"}
-                        onClick={(e) => updateCoverage(topping.id, "right", e)}
-                        title="צד ימין"
-                      />
-                      <CoveragePizzaButton
-                        coverage="whole"
-                        selected={selected.coverage === "whole"}
-                        onClick={(e) => updateCoverage(topping.id, "whole", e)}
-                        title="כל הפיצה"
-                      />
-                      <CoveragePizzaButton
-                        coverage="left"
-                        selected={selected.coverage === "left"}
-                        onClick={(e) => updateCoverage(topping.id, "left", e)}
-                        title="צד שמאל"
-                      />
+                      {(["right", "whole", "left"] as Coverage[]).map((cov) => (
+                        <motion.button
+                          key={cov}
+                          onClick={(e) => updateCoverage(topping.id, cov, e)}
+                          whileTap={{ scale: 0.85 }}
+                          title={cov === "right" ? "צד ימין" : cov === "whole" ? "כל הפיצה" : "צד שמאל"}
+                          className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${
+                            selected.coverage === cov
+                              ? "bg-orange-500/15 ring-1 ring-orange-500/50"
+                              : "hover:bg-black/5"
+                          }`}
+                        >
+                          <CoverageIcon coverage={cov} />
+                        </motion.button>
+                      ))}
                       <motion.button
                         onClick={(e) => { e.stopPropagation(); removeTopping(topping.id) }}
                         whileTap={{ scale: 0.9 }}
