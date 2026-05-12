@@ -14,11 +14,17 @@ export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizer
     // Keep the topping render-size proportional to the preview, so density looks consistent.
     const toppingSize = Math.max(size * 0.14, 8)
 
+    // Base image follows the selected sauce, same logic as PizzaBuilder.
+    const selectedSauceId = selectedToppings.find(t =>
+        toppings.sauce.some(s => s.id === t.id)
+    )?.id
+    const baseImage = selectedSauceId === "white" ? "/images/bian.webp" : "/images/margherita.webp"
+
     return (
         <div className="relative w-full h-full">
             <div className="absolute inset-0">
                 <Image
-                    src="/images/margherita.webp"
+                    src={baseImage}
                     alt="Pizza base"
                     fill
                     className="object-contain drop-shadow-sm rounded-full"
@@ -35,7 +41,8 @@ export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizer
                         break
                     }
                 }
-                if (!toppingData) return null
+                // Skip sauces (no image) — they change the base, not paint dots.
+                if (!toppingData?.image) return null
 
                 const positions = generateToppingPositions({
                     toppingId: selected.id,
@@ -62,25 +69,13 @@ export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizer
                                     transform: `translate(-50%, -50%) rotate(${pos.rotation}deg) scale(${pos.scale})`,
                                 }}
                             >
-                                {toppingData?.image ? (
-                                    <Image
-                                        src={toppingData.image}
-                                        alt={toppingData.name}
-                                        width={toppingSize}
-                                        height={toppingSize}
-                                        className="object-contain drop-shadow-sm"
-                                    />
-                                ) : (
-                                    <div
-                                        className="rounded-full mx-auto mt-2"
-                                        style={{
-                                            width: toppingSize * 0.4,
-                                            height: toppingSize * 0.4,
-                                            backgroundColor: toppingData?.color,
-                                            boxShadow: "0 1px 1px rgba(0,0,0,0.2)"
-                                        }}
-                                    />
-                                )}
+                                <Image
+                                    src={toppingData.image}
+                                    alt={toppingData.name}
+                                    width={toppingSize}
+                                    height={toppingSize}
+                                    className="object-contain drop-shadow-sm"
+                                />
                             </div>
                         ))}
                     </div>
