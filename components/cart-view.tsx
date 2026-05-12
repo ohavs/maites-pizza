@@ -11,9 +11,10 @@ interface CartViewProps {
     items?: CartItem[]
     onEditItem?: (item: CartItem) => void
     onRemoveItem?: (id: string) => void
+    onCheckout?: () => void
 }
 
-export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps) {
+export function CartView({ items = [], onEditItem, onRemoveItem, onCheckout }: CartViewProps) {
     const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
     const [confirmingId, setConfirmingId] = useState<string | null>(null)
     const confirmingItem = confirmingId ? items.find(i => i.id === confirmingId) : null
@@ -113,6 +114,7 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
                             <span className="text-xl font-bold text-foreground tabular-nums">₪{total.toFixed(2)}</span>
                         </div>
                         <motion.button
+                            onClick={onCheckout}
                             whileTap={{ scale: 0.98 }}
                             className="w-full rounded-[20px] bg-gradient-to-r from-primary to-orange-400 py-3 text-center shadow-lg shadow-orange-500/20"
                         >

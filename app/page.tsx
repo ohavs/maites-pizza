@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Header } from "@/components/header"
 import { HomeDashboard } from "@/components/home-dashboard"
@@ -10,35 +10,46 @@ import { SearchView } from "@/components/search-view"
 import { CartView } from "@/components/cart-view"
 import { ProfileView } from "@/components/profile-view"
 import { PizzaDetailsOverlay } from "@/components/pizza-details-overlay"
+import { CheckoutOverlay } from "@/components/checkout-overlay"
 import { pizzas } from "@/lib/data"
 import { CartItem } from "@/lib/types"
+
+const CART_KEY = "maites-cart"
 
 export default function PizzaCraftApp() {
   const [activeTab, setActiveTab] = useState("home")
   const [currentView, setCurrentView] = useState<"home" | "builder">("home")
   const [selectedPizzaId, setSelectedPizzaId] = useState<number | null>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
-
-  // State for editing cart item
+  const [showCheckout, setShowCheckout] = useState(false)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
+
+  // Restore cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CART_KEY)
+      if (saved) setCartItems(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  // Persist cart to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cartItems))
+    } catch {}
+  }, [cartItems])
 
   const handleNavigate = (view: string, id?: number) => {
     if (view === "builder") {
       setEditingItemId(null)
       setCurrentView("builder")
     } else if (view === "menu") {
-      // Menu now opens the overlay at the first pizza
       setSelectedPizzaId(pizzas[0].id)
     } else if (view === "pizza-details" && id) {
-      // Open as overlay — don't change currentView
       setSelectedPizzaId(id)
     } else {
       setCurrentView("home")
     }
-  }
-
-  const handleClosePizzaOverlay = () => {
-    setSelectedPizzaId(null)
   }
 
   const handleAddToCart = (item: CartItem) => {
@@ -64,8 +75,15 @@ export default function PizzaCraftApp() {
     setCartItems(prev => prev.filter(i => i.id !== id))
   }
 
-  // Find the item being edited to pass its initial state
+  const handleOrderComplete = (orderNumber: number) => {
+    setCartItems([])
+    setShowCheckout(false)
+    setActiveTab("home")
+    setCurrentView("home")
+  }
+
   const editingItem = editingItemId ? cartItems.find(i => i.id === editingItemId) : null
+  const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
 
   return (
     <main className="relative flex h-[100dvh] flex-col bg-background overflow-hidden">
@@ -73,8 +91,8 @@ export default function PizzaCraftApp() {
         {currentView === "builder" ? (
           <motion.div
             key="builder"
-            initial={{ opacity: 0, scale: 0.95, x: 0 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
             className="flex flex-1 flex-col h-full"
@@ -107,22 +125,40 @@ export default function PizzaCraftApp() {
               </>
             )}
             {activeTab === "search" && <SearchView onNavigate={handleNavigate} />}
-            {activeTab === "cart" && <CartView items={cartItems} onEditItem={handleEditCartItem} onRemoveItem={handleRemoveCartItem} />}
+            {activeTab === "cart" && (
+              <CartView
+                items={cartItems}
+                onEditItem={handleEditCartItem}
+                onRemoveItem={handleRemoveCartItem}
+                onCheckout={() => setShowCheckout(true)}
+              />
+            )}
             {activeTab === "profile" && <ProfileView />}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Pizza Details Overlay — renders on TOP of everything */}
+      {/* Pizza Details Overlay */}
       <AnimatePresence>
         {selectedPizzaId !== null && (
           <PizzaDetailsOverlay
             key="pizza-overlay"
             pizzaId={selectedPizzaId}
-            onClose={handleClosePizzaOverlay}
-            onAddToCart={(item) => {
-              handleAddToCart(item)
-            }}
+            onClose={() => setSelectedPizzaId(null)}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Checkout Overlay */}
+      <AnimatePresence>
+        {showCheckout && (
+          <CheckoutOverlay
+            key="checkout"
+            items={cartItems}
+            total={cartTotal}
+            onClose={() => setShowCheckout(false)}
+            onOrderComplete={handleOrderComplete}
           />
         )}
       </AnimatePresence>
@@ -132,18 +168,12 @@ export default function PizzaCraftApp() {
         cartCount={cartItems.length}
         onTabChange={(tab) => {
           if (tab === "menu") {
-            // Menu tab opens the overlay at the first pizza
             setSelectedPizzaId(pizzas[0].id)
             return
           }
           setActiveTab(tab)
-          if (tab === "home") {
-            setCurrentView("home")
-            setEditingItemId(null)
-          } else {
-            setCurrentView("home")
-            setEditingItemId(null)
-          }
+          setCurrentView("home")
+          setEditingItemId(null)
         }}
       />
     </main>
