@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronRight, Plus, Circle, Trash2, ShoppingCart } from "lucide-react"
+import { ChevronRight, Plus, Trash2, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { CartItem, Coverage, SelectedTopping, Topping } from "@/lib/types"
 import { toppings, toppingCategories } from "@/lib/pizza-data"
@@ -16,6 +16,69 @@ function CoverageIcon({ coverage }: { coverage: Coverage }) {
     <div className="w-3 h-3 rounded-full border-[1.5px] border-orange-500 relative overflow-hidden shrink-0" aria-label={coverage === "right" ? "צד ימין" : "צד שמאל"}>
       <div className={`absolute ${coverage === "right" ? "right-0" : "left-0"} top-0 bottom-0 w-1/2 bg-orange-500`} />
     </div>
+  )
+}
+
+// Hand-placed pepperoni positions for each coverage variant (% of icon).
+// Asymmetric placement reads more "organic pizza" than perfect symmetry.
+const COVERAGE_DOTS: Record<Coverage, [number, number][]> = {
+  whole: [[50, 28], [28, 50], [72, 50], [38, 74], [64, 70]],
+  left:  [[28, 30], [22, 55], [38, 48], [30, 76], [42, 38]],
+  right: [[72, 30], [78, 55], [62, 48], [70, 76], [58, 38]],
+}
+
+function CoveragePizzaButton({
+  coverage,
+  selected,
+  onClick,
+  title,
+}: {
+  coverage: Coverage
+  selected: boolean
+  onClick: (e: React.MouseEvent) => void
+  title: string
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      title={title}
+      whileTap={{ scale: 0.9 }}
+      animate={{ scale: selected ? 1.08 : 1 }}
+      transition={{ type: "spring", stiffness: 420, damping: 24 }}
+      className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-shadow ${
+        selected
+          ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-card shadow-[0_4px_14px_rgba(251,87,21,0.35)]"
+          : "ring-1 ring-border/40"
+      }`}
+    >
+      <div
+        className="relative w-8 h-8 rounded-full overflow-hidden"
+        style={{
+          background: selected
+            ? "radial-gradient(circle at 35% 30%, #FFE9B8 0%, #FFD494 60%, #C99366 100%)"
+            : "radial-gradient(circle at 35% 30%, #EFE3CC 0%, #D9C29B 60%, #9C8062 100%)",
+          boxShadow: selected
+            ? "inset 0 -2px 4px rgba(180, 100, 40, 0.25)"
+            : "inset 0 -1px 2px rgba(100, 70, 40, 0.15)",
+        }}
+      >
+        {COVERAGE_DOTS[coverage].map(([x, y], i) => (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              left: `${x}%`,
+              top: `${y}%`,
+              width: "6px",
+              height: "6px",
+              transform: "translate(-50%, -50%)",
+              background: selected ? "#C0392B" : "#8a6e5c",
+              boxShadow: selected ? "0 1px 1px rgba(0,0,0,0.25)" : "none",
+            }}
+          />
+        ))}
+      </div>
+    </motion.button>
   )
 }
 
@@ -336,41 +399,35 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.1 }}
-                      className="flex items-center gap-1.5 relative z-10"
+                      className="flex items-center gap-2 relative z-10"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button
+                      <CoveragePizzaButton
+                        coverage="right"
+                        selected={selected.coverage === "right"}
                         onClick={(e) => updateCoverage(topping.id, "right", e)}
-                        className={`p-2 rounded-full transition-all ${selected.coverage === 'right' ? 'bg-orange-500 text-white shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                         title="צד ימין"
-                      >
-                        <div className="w-4 h-4 rounded-full border-[2.5px] border-current relative overflow-hidden">
-                          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-current opacity-80"></div>
-                        </div>
-                      </button>
-                      <button
+                      />
+                      <CoveragePizzaButton
+                        coverage="whole"
+                        selected={selected.coverage === "whole"}
                         onClick={(e) => updateCoverage(topping.id, "whole", e)}
-                        className={`p-2 rounded-full transition-all ${selected.coverage === 'whole' ? 'bg-orange-500 text-white shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                         title="כל הפיצה"
-                      >
-                        <Circle className="w-4 h-4 fill-current border-[2.5px] border-current rounded-full" />
-                      </button>
-                      <button
+                      />
+                      <CoveragePizzaButton
+                        coverage="left"
+                        selected={selected.coverage === "left"}
                         onClick={(e) => updateCoverage(topping.id, "left", e)}
-                        className={`p-2 rounded-full transition-all ${selected.coverage === 'left' ? 'bg-orange-500 text-white shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                         title="צד שמאל"
-                      >
-                        <div className="w-4 h-4 rounded-full border-[2.5px] border-current relative overflow-hidden">
-                          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-current opacity-80"></div>
-                        </div>
-                      </button>
-                      <button
+                      />
+                      <motion.button
                         onClick={(e) => { e.stopPropagation(); removeTopping(topping.id) }}
-                        className="p-2 rounded-full transition-all text-red-500 hover:bg-red-50 ml-1"
+                        whileTap={{ scale: 0.9 }}
+                        className="flex items-center justify-center w-9 h-9 rounded-full text-red-500/80 hover:bg-red-50 hover:text-red-600 transition-all ml-1"
                         title="הסר תוספת"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </motion.button>
                     </motion.div>
                   )}
                 </motion.div>
