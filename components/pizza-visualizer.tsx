@@ -49,6 +49,7 @@ export function PizzaVisualizer({ selectedToppings, size = 80 }: PizzaVisualizer
                     coverage: selected.coverage,
                     containerSize: size,
                     toppingSize,
+                    base: selectedSauceId === "white" ? "bian" : "margherita",
                 })
 
                 return (

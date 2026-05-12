@@ -1,26 +1,39 @@
 import type { Coverage } from "./types"
 
 /**
- * Pizza geometry, derived from analyzing /public/images/margherita.webp (2400x1339).
- * Center of mass at ~(49.24%, 49.80%) of the image; outer crust radius ~23.45% of image width.
- * Color sampling shows the sauce/cheese area ends and the crust starts at ~75% of the outer radius.
+ * Pizza geometry, derived from a fresh pixel-level analysis of the two base
+ * images. Each base has its own disc center, outer radius, and sauce radius
+ * (where the crust starts), measured by:
+ *  - Using the image's alpha channel to extract the pizza disc
+ *  - Computing the bounding-box center & min(width/2, height/2) as the radius
+ *  - Sampling a radial brightness profile to locate the sauce→crust transition
  *
- * Coordinates are expressed as PERCENTAGES of the SQUARE container that holds the pizza image
- * (object-contain, aspect-square). Because the image is wider than tall, when contained in a
- * square it is letterboxed top/bottom, but the pizza in the image happens to sit at almost the
- * exact horizontal/vertical center, so we can treat (~50, ~50) as the disc center safely.
+ * All values are PERCENTAGES of the SQUARE container that holds the pizza
+ * (object-contain, aspect-square). The image is wider than tall, so it's
+ * letterboxed top/bottom; the math below accounts for that.
+ *
+ *   margherita.webp  center=(49.25%, 49.81%)  outerR=23.3%  sauceR=16.3%
+ *   bian.webp        center=(49.83%, 49.88%)  outerR=26.3%  sauceR=18.4%
+ *
+ * bian (cream base) is visibly larger than margherita; using one number for
+ * both would either leave a band of empty sauce on bian or push toppings onto
+ * the crust on margherita, so the helper takes the base id and picks the
+ * right constants.
  */
-export const PIZZA = {
-    // centerX shifted from the image's true center (49.24%) to compensate for the
-    // perceived right-bias on real devices — several topping PNGs have their visible
-    // blob right-of-center within their bounding box (parmesan @ 56.6%, basil @ 54.5%,
-    // mushroom @ 52.2%), so a uniform left-shift of the placement center fixes
-    // "left looks like middle / whole looks middle+right".
-    centerX: 47.0,
-    centerY: 50.0,
-    outerRadius: 23.0,
-    sauceRadius: 17.0,
-} as const
+export type PizzaBase = "margherita" | "bian"
+
+export const PIZZA_BASES: Record<PizzaBase, {
+    centerX: number
+    centerY: number
+    outerRadius: number
+    sauceRadius: number
+}> = {
+    margherita: { centerX: 49.25, centerY: 49.81, outerRadius: 23.3, sauceRadius: 16.3 },
+    bian:       { centerX: 49.83, centerY: 49.88, outerRadius: 26.3, sauceRadius: 18.4 },
+}
+
+// Back-compat default export — older call sites get margherita geometry.
+export const PIZZA = PIZZA_BASES.margherita
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 
@@ -49,84 +62,96 @@ export interface ToppingLayoutInput {
     containerSize: number
     /** Topping image rendered size in pixels. */
     toppingSize: number
-    /** Optional override for how many toppings to place (whole pizza). Defaults to a stable count per id. */
+    /** Which pizza base — picks the matching disc geometry. Defaults to margherita. */
+    base?: PizzaBase
+    /** Optional override for whole-pizza count. */
     baseCount?: number
 }
 
 /**
- * Generate evenly distributed topping positions within the pizza's sauce zone, using a
- * sunflower (Vogel) pattern with a tiny seeded jitter so it looks organic but never random/messy.
+ * Place toppings on the pizza disc.
  *
- * - Stays strictly inside the pizza (does NOT spill onto crust or transparent canvas).
- * - For "left"/"right" coverage, restricts placement to that half with a small gap near the split line.
- * - Stable across renders (deterministic given toppingId + coverage + sizes).
+ * Algorithm: rejection-sampled Vogel sunflower.
+ *  1) Walk a golden-angle sunflower across the FULL disc — this is the most
+ *     well-known low-discrepancy 2D pattern; adjacent points never share a
+ *     visual cluster.
+ *  2) For half coverage (left/right), only KEEP candidates that fall on the
+ *     requested side of the center line (with a small `splitGap` no-go strip
+ *     to prevent points from straddling the middle).
+ *  3) Apply a small seeded jitter so it doesn't look like a perfect spiral.
+ *
+ * Why rejection sampling and not "map full-disc x onto one side":
+ * the previous version computed x for the full disc then folded it via
+ * `dx = sign * (gap + |dx_full| * scale)`. Folding squashed two halves into
+ * one, leaving a cluster near the middle and an empty rim — exactly the
+ * "left looks like middle" perception we kept fighting. Rejection keeps the
+ * sunflower's natural even spread on whatever half survives.
  */
 export function generateToppingPositions(input: ToppingLayoutInput): ToppingPosition[] {
-    const { toppingId, coverage, containerSize, toppingSize, baseCount } = input
+    const { toppingId, coverage, containerSize, toppingSize, baseCount, base = "margherita" } = input
+    const geom = PIZZA_BASES[base]
 
-    // Margin so the topping image sits fully inside the sauce zone.
-    // The topping bounding-box is always a fixed pixel size regardless of container,
-    // so we compute the margin as half the topping's pixel width expressed as a % of
-    // the ACTUAL container — then double it for safety so the visible art never clips
-    // onto the crust even on small phones where the container is only ~470px.
+    // Margin so the topping art sits fully inside the sauce zone. We subtract
+    // the topping's full pixel width (as a % of the actual container) so the
+    // image edge never crosses onto the crust, even on the narrowest phones.
     const toppingHalfWidthPct = (toppingSize / 2 / Math.max(containerSize, 1)) * 100
-    const toppingMarginPct = toppingHalfWidthPct * 2   // = full topping width as %
-    const placementRadius = Math.max(PIZZA.sauceRadius - toppingMarginPct, 3)
+    const toppingMarginPct = toppingHalfWidthPct * 2
+    const placementRadius = Math.max(geom.sauceRadius - toppingMarginPct, 3)
 
     const seed = hashString(toppingId)
     const defaultCount = toppingId === "basil" ? 9 : 16 + (seed % 4)
     const wholeCount = baseCount ?? defaultCount
-    const count = coverage === "whole" ? wholeCount : Math.max(Math.ceil(wholeCount / 2), 4)
+    // Half-coverage keeps a bit more than 50% so the chosen side reads as
+    // properly filled (visually, half the disc with half the points feels
+    // sparse next to a full "whole" pizza in someone else's order).
+    const targetCount = coverage === "whole"
+        ? wholeCount
+        : Math.max(Math.ceil(wholeCount * 0.55), 6)
 
-    // Minimum distance (in % of container) from the vertical split line for half-coverage.
-    // Without this, points with cos(θ) ≈ 0 cluster at the middle of the pizza and "left" looks central.
-    const splitGap = 1.8
-
-    const positions: ToppingPosition[] = []
-
-    // Tiny per-instance jitter, in % of container, so it doesn't look like a perfect math pattern.
+    // No-go strip around the vertical center line for half-coverage. Without
+    // it, points with cos(θ) ≈ 0 hover on the middle and "left" reads as
+    // "central". 2% of container ≈ 10px on a 487px stage — visible but small.
+    const splitGap = 2.0
     const jitterMag = Math.min(placementRadius * 0.06, 0.9)
 
-    for (let i = 0; i < count; i++) {
-        // Sunflower: uniform area distribution within a disc of radius `placementRadius`.
-        const t = (i + 0.5) / count
+    // For half-coverage, generate ~2x sunflower candidates so roughly half
+    // land on the chosen side. The factor accounts for the splitGap losses too.
+    const candidateCount = coverage === "whole" ? targetCount : targetCount * 2
+
+    const positions: ToppingPosition[] = []
+    let i = 0
+    const maxIter = candidateCount * 4
+    while (positions.length < targetCount && i < maxIter) {
+        // t spans 0..1 across the candidate window so the sunflower reaches
+        // the full placement radius. Past 1 the t would go outside the disc.
+        const t = (i + 0.5) / candidateCount
+        if (t > 1) { i++; continue }
         const r = Math.sqrt(t) * placementRadius
         const sunflowerAngle = i * GOLDEN_ANGLE + seed * 0.017
-
-        let dx = r * Math.cos(sunflowerAngle)
-        let dy = r * Math.sin(sunflowerAngle)
+        const dx = r * Math.cos(sunflowerAngle)
+        const dy = r * Math.sin(sunflowerAngle)
+        i++
 
         if (coverage !== "whole") {
-            // Map the full-disc x to one side of the pizza with a hard minimum offset from the
-            // split line. |dx| ∈ [0, R] → [splitGap, R], preserving relative density across the half.
             const sign = coverage === "right" ? 1 : -1
-            const usableWidth = Math.max(placementRadius - splitGap, 1)
-            dx = sign * (splitGap + Math.abs(dx) * (usableWidth / placementRadius))
+            if (sign * dx < splitGap) continue
         }
 
         const jx = (seededRandom(seed + i * 3.71) - 0.5) * jitterMag
         const jy = (seededRandom(seed + i * 7.13) - 0.5) * jitterMag
 
-        let x = PIZZA.centerX + dx + jx
-        let y = PIZZA.centerY + dy + jy
+        let x = geom.centerX + dx + jx
+        let y = geom.centerY + dy + jy
 
-        // Clamp inside the sauce circle as a final safety net.
-        const cdx = x - PIZZA.centerX
-        const cdy = y - PIZZA.centerY
+        // Hard clamp inside the sauce circle — jitter or splitGap rounding
+        // could otherwise nudge a point one pixel past the edge.
+        const cdx = x - geom.centerX
+        const cdy = y - geom.centerY
         const dist = Math.sqrt(cdx * cdx + cdy * cdy)
         if (dist > placementRadius) {
             const k = placementRadius / dist
-            x = PIZZA.centerX + cdx * k
-            y = PIZZA.centerY + cdy * k
-        }
-
-        // Hard guarantee on side for half coverage (in case jitter pushed across the line).
-        if (coverage === "right") {
-            const minX = PIZZA.centerX + splitGap
-            if (x < minX) x = minX
-        } else if (coverage === "left") {
-            const maxX = PIZZA.centerX - splitGap
-            if (x > maxX) x = maxX
+            x = geom.centerX + cdx * k
+            y = geom.centerY + cdy * k
         }
 
         const rotation = seededRandom(seed + i * 11.7) * 360

@@ -205,6 +205,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                 coverage: selected.coverage,
                 containerSize: STAGE_CONTAINER_PX,
                 toppingSize: TOPPING_RENDER_PX,
+                base: selectedSauceId === "white" ? "bian" : "margherita",
               })
 
               return (
