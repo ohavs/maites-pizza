@@ -289,13 +289,13 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
           </div>
 
           {/* Toppings Grid (2 per row) */}
-          <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="grid grid-cols-2 gap-3 mb-8 items-start">
             {currentToppings.map((topping: any) => {
               const selected = selectedToppings.find(t => t.id === topping.id)
               const isSelected = !!selected
               const isExpanded = isSelected && expandedToppingId === topping.id
 
-              const handleCapsuleClick = () => {
+              const handleCardClick = () => {
                 if (!isSelected) {
                   toggleTopping(topping.id)
                 } else if (isExpanded) {
@@ -308,20 +308,40 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
               return (
                 <motion.div
                   key={topping.id}
-                  onClick={handleCapsuleClick}
+                  onClick={handleCardClick}
                   whileTap={{ scale: 0.97 }}
                   layout
-                  className={`relative flex flex-col items-center border transition-all cursor-pointer overflow-hidden ${
+                  className={`relative flex flex-col items-center border cursor-pointer rounded-2xl transition-colors ${
                     isExpanded
-                      ? "rounded-[2rem] bg-card border-orange-500/40 shadow-md min-h-[110px] py-3 px-3 justify-between gap-2"
+                      ? "bg-card border-orange-400/50 shadow-md pt-3 pb-3 px-2 gap-2"
                       : isSelected
-                        ? "rounded-full bg-orange-500/10 border-orange-500/50 min-h-[60px] p-2 justify-center"
-                        : "rounded-full bg-transparent border-border/30 hover:bg-black/5 min-h-[60px] p-2 justify-center"
+                        ? "bg-orange-500/[0.08] border-orange-400/40 shadow-sm pt-3 pb-2 px-2 gap-1.5"
+                        : "bg-card/60 border-border/20 shadow-sm hover:bg-card/80 hover:border-border/40 pt-3 pb-2 px-2 gap-1.5"
                   }`}
                 >
+                  {/* Topping image or colour swatch — hidden when expanded to make room for buttons */}
+                  {!isExpanded && (
+                    <div className="shrink-0">
+                      {topping.image ? (
+                        <Image
+                          src={topping.image}
+                          alt={topping.name}
+                          width={40}
+                          height={40}
+                          className={`object-contain drop-shadow-sm transition-opacity ${isSelected ? "opacity-95" : "opacity-65"}`}
+                        />
+                      ) : (
+                        <div
+                          className="w-9 h-9 rounded-full border-2 border-white/40 shadow-inner"
+                          style={{ background: topping.color }}
+                        />
+                      )}
+                    </div>
+                  )}
+
                   <motion.div layout className="text-center w-full shrink-0">
-                    <span className={`font-bold block leading-tight transition-all ${
-                      isExpanded ? "text-xs text-orange-600" : isSelected ? "text-base text-orange-700" : "text-base text-foreground"
+                    <span className={`font-semibold block leading-tight transition-colors ${
+                      isExpanded ? "text-xs text-orange-600" : isSelected ? "text-sm text-orange-700" : "text-sm text-foreground"
                     }`}>
                       {topping.name}
                     </span>
@@ -334,10 +354,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
 
                   {isExpanded && selected && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 }}
-                      className="flex items-center gap-2 relative z-10"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.08 }}
+                      className="flex items-center gap-1.5"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {(["right", "whole", "left"] as Coverage[]).map((cov) => (
@@ -346,7 +366,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                           onClick={(e) => updateCoverage(topping.id, cov, e)}
                           whileTap={{ scale: 0.85 }}
                           title={cov === "right" ? "צד ימין" : cov === "whole" ? "כל הפיצה" : "צד שמאל"}
-                          className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
                             selected.coverage === cov
                               ? "bg-orange-500/15 ring-1 ring-orange-500/50"
                               : "hover:bg-black/5"
@@ -358,10 +378,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                       <motion.button
                         onClick={(e) => { e.stopPropagation(); removeTopping(topping.id) }}
                         whileTap={{ scale: 0.9 }}
-                        className="flex items-center justify-center w-9 h-9 rounded-full text-red-500/80 hover:bg-red-50 hover:text-red-600 transition-all ml-1"
+                        className="flex items-center justify-center w-8 h-8 rounded-full text-red-500/70 hover:bg-red-50 hover:text-red-600 transition-all"
                         title="הסר תוספת"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </motion.button>
                     </motion.div>
                   )}
