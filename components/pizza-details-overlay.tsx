@@ -216,9 +216,10 @@ export function PizzaDetailsOverlay({ pizzaId, onClose, onAddToCart }: PizzaDeta
                             </div>
 
                             {/* Description */}
-                            <p className="text-sm text-[#1A1A1A]/60 leading-relaxed mb-4">
+                            <p className="text-sm text-[#1A1A1A]/60 leading-relaxed mb-1">
                                 {activePizza.description}
                             </p>
+                            <p className="text-[10px] text-[#1A1A1A]/40 mb-4">* התמונה להמחשה בלבד</p>
 
                             {/* Ingredients */}
                             <div className="mb-2">
