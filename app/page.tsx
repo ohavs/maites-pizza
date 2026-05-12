@@ -60,6 +60,10 @@ export default function PizzaCraftApp() {
     }
   }
 
+  const handleRemoveCartItem = (id: string) => {
+    setCartItems(prev => prev.filter(i => i.id !== id))
+  }
+
   // Find the item being edited to pass its initial state
   const editingItem = editingItemId ? cartItems.find(i => i.id === editingItemId) : null
 
@@ -103,7 +107,7 @@ export default function PizzaCraftApp() {
               </>
             )}
             {activeTab === "search" && <SearchView onNavigate={handleNavigate} />}
-            {activeTab === "cart" && <CartView items={cartItems} onEditItem={handleEditCartItem} />}
+            {activeTab === "cart" && <CartView items={cartItems} onEditItem={handleEditCartItem} onRemoveItem={handleRemoveCartItem} />}
             {activeTab === "profile" && <ProfileView />}
           </motion.div>
         )}

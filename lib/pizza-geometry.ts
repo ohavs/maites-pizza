@@ -91,46 +91,40 @@ export function generateToppingPositions(input: ToppingLayoutInput): ToppingPosi
     const { toppingId, coverage, containerSize, toppingSize, baseCount, base = "margherita" } = input
     const geom = PIZZA_BASES[base]
 
-    // Margin so the topping art sits fully inside the sauce zone. We subtract
-    // the topping's full pixel width (as a % of the actual container) so the
-    // image edge never crosses onto the crust, even on the narrowest phones.
-    const toppingHalfWidthPct = (toppingSize / 2 / Math.max(containerSize, 1)) * 100
-    const toppingMarginPct = toppingHalfWidthPct * 2
-    const placementRadius = Math.max(geom.sauceRadius - toppingMarginPct, 3)
+    // Keep the topping center at least half the topping's rendered width from
+    // the sauce boundary so the image edge stays within the sauce zone.
+    const toppingEdgePct = (toppingSize / 2 / Math.max(containerSize, 1)) * 100
+    const placementRadius = Math.max(geom.sauceRadius - toppingEdgePct, 3)
 
     const seed = hashString(toppingId)
-    const defaultCount = toppingId === "basil" ? 9 : 16 + (seed % 4)
+    const defaultCount = toppingId === "basil" ? 7 : 14 + (seed % 5)
     const wholeCount = baseCount ?? defaultCount
-    // Half-coverage keeps a bit more than 50% so the chosen side reads as
-    // properly filled (visually, half the disc with half the points feels
-    // sparse next to a full "whole" pizza in someone else's order).
+
     const targetCount = coverage === "whole"
         ? wholeCount
-        : Math.max(Math.ceil(wholeCount * 0.55), 6)
+        : Math.max(Math.ceil(wholeCount * 0.60), 5)
 
-    // No-go strip around the vertical center line for half-coverage. Without
-    // it, points with cos(θ) ≈ 0 hover on the middle and "left" reads as
-    // "central". 2% of container ≈ 10px on a 487px stage — visible but small.
-    const splitGap = 2.0
-    const jitterMag = Math.min(placementRadius * 0.06, 0.9)
+    // Narrow no-go strip at the vertical centre line so half-side toppings
+    // never appear to straddle the divide.
+    const splitGap = 1.5
+    const jitterMag = Math.min(placementRadius * 0.07, 1.2)
 
-    // For half-coverage, generate ~2x sunflower candidates so roughly half
-    // land on the chosen side. The factor accounts for the splitGap losses too.
+    // For half-coverage we generate a full-disc sunflower with 2× candidates,
+    // then keep every point that lands on the chosen side (no early exit).
+    // This guarantees survivors are drawn from the whole radial range —
+    // stopping early would bias toward the inner disc and leave the rim bare.
     const candidateCount = coverage === "whole" ? targetCount : targetCount * 2
 
     const positions: ToppingPosition[] = []
-    let i = 0
-    const maxIter = candidateCount * 4
-    while (positions.length < targetCount && i < maxIter) {
-        // t spans 0..1 across the candidate window so the sunflower reaches
-        // the full placement radius. Past 1 the t would go outside the disc.
+    for (let i = 0; i < candidateCount; i++) {
+        // For whole coverage stop as soon as we have enough.
+        if (coverage === "whole" && positions.length >= targetCount) break
+
         const t = (i + 0.5) / candidateCount
-        if (t > 1) { i++; continue }
         const r = Math.sqrt(t) * placementRadius
         const sunflowerAngle = i * GOLDEN_ANGLE + seed * 0.017
         const dx = r * Math.cos(sunflowerAngle)
         const dy = r * Math.sin(sunflowerAngle)
-        i++
 
         if (coverage !== "whole") {
             const sign = coverage === "right" ? 1 : -1
@@ -143,8 +137,7 @@ export function generateToppingPositions(input: ToppingLayoutInput): ToppingPosi
         let x = geom.centerX + dx + jx
         let y = geom.centerY + dy + jy
 
-        // Hard clamp inside the sauce circle — jitter or splitGap rounding
-        // could otherwise nudge a point one pixel past the edge.
+        // Clamp inside the sauce circle in case jitter nudges a point over.
         const cdx = x - geom.centerX
         const cdy = y - geom.centerY
         const dist = Math.sqrt(cdx * cdx + cdy * cdy)

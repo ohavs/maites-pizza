@@ -1,7 +1,8 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { Trash2, Minus, Plus, ShoppingBag, Pencil } from "lucide-react"
+import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { Trash2, ShoppingBag, Pencil } from "lucide-react"
 
 import { CartItem } from "@/lib/types"
 import { PizzaVisualizer } from "./pizza-visualizer"
@@ -9,10 +10,13 @@ import { PizzaVisualizer } from "./pizza-visualizer"
 interface CartViewProps {
     items?: CartItem[]
     onEditItem?: (item: CartItem) => void
+    onRemoveItem?: (id: string) => void
 }
 
-export function CartView({ items = [], onEditItem }: CartViewProps) {
+export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps) {
     const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
+    const [confirmingId, setConfirmingId] = useState<string | null>(null)
+    const confirmingItem = confirmingId ? items.find(i => i.id === confirmingId) : null
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-background">
@@ -28,59 +32,60 @@ export function CartView({ items = [], onEditItem }: CartViewProps) {
                         <p className="mt-2 text-sm text-muted-foreground">הוסיפו כמה פיצות טעימות כדי להתחיל</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         {items.map((item, index) => (
                             <motion.div
                                 key={item.id}
+                                layout
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                className="flex items-start gap-4 rounded-[24px] bg-card p-4 shadow-sm"
+                                exit={{ opacity: 0, x: -40, transition: { duration: 0.2 } }}
+                                transition={{ delay: index * 0.08, type: "spring", stiffness: 320, damping: 26 }}
+                                className="relative flex items-center gap-3 rounded-[26px] bg-card p-4 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-border/20"
                             >
-                                <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-muted shrink-0">
+                                {/* Pizza — extends past the card edges for a tactile, 3D feel.
+                                    No background box: the transparent PNG sits directly on the page. */}
+                                <div
+                                    className="relative h-[124px] w-[124px] -ms-5 -my-6 shrink-0"
+                                    style={{ filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.18))" }}
+                                >
                                     {item.customToppings ? (
-                                        <PizzaVisualizer selectedToppings={item.customToppings} size={80} />
+                                        <PizzaVisualizer selectedToppings={item.customToppings} size={124} />
                                     ) : (
-                                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                                        <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
                                     )}
                                 </div>
 
-                                <div className="flex-1">
-                                    <div className="flex justify-between">
-                                        <h3 className="font-bold text-foreground">{item.name}</h3>
-                                        <p className="font-bold text-primary">₪{item.price.toFixed(2)}</p>
-                                    </div>
+                                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                                    <h3 className="font-bold text-foreground leading-tight">{item.name}</h3>
 
                                     {item.toppings.length > 0 && (
-                                        <p className="mt-1 text-xs text-muted-foreground">
+                                        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
                                             {item.toppings.join(", ")}
                                         </p>
                                     )}
 
-                                    <div className="mt-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <button className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-muted/80">
-                                                <Minus className="h-3 w-3" />
-                                            </button>
-                                            <span className="text-sm font-semibold w-4 text-center">{item.quantity}</span>
-                                            <button className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-muted/80">
-                                                <Plus className="h-3 w-3" />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-between mt-1.5">
+                                        <p className="text-lg font-extrabold text-primary">₪{(item.price * item.quantity).toFixed(2)}</p>
+                                        <div className="flex items-center gap-1.5">
                                             {item.customToppings && onEditItem && (
-                                                <button
+                                                <motion.button
                                                     onClick={() => onEditItem(item)}
-                                                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                                    whileTap={{ scale: 0.88 }}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                                                     title="ערוך פיצה"
                                                 >
                                                     <Pencil className="h-4 w-4" />
-                                                </button>
+                                                </motion.button>
                                             )}
-                                            <button className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+                                            <motion.button
+                                                onClick={() => setConfirmingId(item.id)}
+                                                whileTap={{ scale: 0.88 }}
+                                                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                                                title="הסר"
+                                            >
                                                 <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            </motion.button>
                                         </div>
                                     </div>
                                 </div>
@@ -90,7 +95,7 @@ export function CartView({ items = [], onEditItem }: CartViewProps) {
                 )}
             </div>
 
-            {/* Checkout Bar - Elevated to avoid nav overlap */}
+            {/* Checkout Bar */}
             {items.length > 0 && (
                 <div className="absolute bottom-28 left-6 right-6 z-40">
                     <div className="rounded-[30px] bg-white/90 backdrop-blur-xl border border-white/20 p-4 shadow-2xl">
@@ -109,6 +114,59 @@ export function CartView({ items = [], onEditItem }: CartViewProps) {
                     </div>
                 </div>
             )}
+
+            {/* Remove-confirmation modal — built in the app's overlay style:
+                blurred backdrop, rounded card, orange-friendly typography. */}
+            <AnimatePresence>
+                {confirmingItem && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 backdrop-blur-sm px-6"
+                        onClick={() => setConfirmingId(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.92, opacity: 0, y: 12 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.92, opacity: 0, y: 12 }}
+                            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-[340px] rounded-[28px] bg-card border border-white/40 p-6 shadow-2xl"
+                        >
+                            <div className="flex flex-col items-center text-center">
+                                <div className="mb-4 rounded-full bg-red-50 p-3.5">
+                                    <Trash2 className="h-6 w-6 text-red-500" />
+                                </div>
+                                <h3 className="text-lg font-bold text-foreground mb-1.5">להסיר את הפיצה?</h3>
+                                <p className="text-sm text-muted-foreground mb-5">
+                                    הפיצה תוסר מההזמנה שלך
+                                </p>
+                                <div className="flex gap-2 w-full">
+                                    <motion.button
+                                        onClick={() => setConfirmingId(null)}
+                                        whileTap={{ scale: 0.97 }}
+                                        className="flex-1 h-11 rounded-full bg-muted text-foreground font-semibold"
+                                    >
+                                        ביטול
+                                    </motion.button>
+                                    <motion.button
+                                        onClick={() => {
+                                            if (onRemoveItem) onRemoveItem(confirmingItem.id)
+                                            setConfirmingId(null)
+                                        }}
+                                        whileTap={{ scale: 0.97 }}
+                                        className="flex-1 h-11 rounded-full bg-red-500 text-white font-semibold shadow-lg shadow-red-500/20"
+                                    >
+                                        הסר
+                                    </motion.button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
