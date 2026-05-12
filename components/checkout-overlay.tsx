@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, CheckCircle2, Loader2, Banknote, Smartphone, ChevronLeft } from "lucide-react"
 import { CartItem } from "@/lib/types"
@@ -24,6 +24,17 @@ const paymentOptions: { id: PaymentMethod; label: string; sub: string; icon: Rea
 export function CheckoutOverlay({ items, total, onClose, onOrderComplete }: CheckoutOverlayProps) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("maites-customer")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.name) setName(parsed.name)
+        if (parsed.phone) setPhone(parsed.phone)
+      }
+    } catch {}
+  }, [])
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
   const [step, setStep] = useState<Step>("form")
   const [orderNumber, setOrderNumber] = useState(0)
