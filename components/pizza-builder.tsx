@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronRight, Plus, Trash2, ShoppingCart } from "lucide-react"
+import { ChevronRight, Plus, Trash2, ShoppingCart, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { CartItem, Coverage, SelectedTopping, Topping } from "@/lib/types"
 import { toppings, toppingCategories } from "@/lib/pizza-data"
@@ -33,6 +33,8 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
   const [selectedToppings, setSelectedToppings] = useState<SelectedTopping[]>(initialToppings || [])
   const [expandedToppingId, setExpandedToppingId] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(editingItem?.quantity || 1)
+  const [justAdded, setJustAdded] = useState(false)
+  const justAddedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const basePrice = 12.99
   const toppingsPrice = selectedToppings.reduce((total, selected) => {
@@ -83,12 +85,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
   }
 
   const handleAdd = () => {
-    // Shared logic for creating the item object
     const newItem: CartItem = {
       id: editingItem ? editingItem.id : Math.random().toString(36).substr(2, 9),
       name: "פיצה בהרכבה אישית",
       toppings: selectedToppings.map(t => {
-        // Find name from toppings object
         for (const category of Object.values(toppings)) {
           // @ts-ignore
           const found = category.find((ft) => ft.id === t.id)
@@ -97,7 +97,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
         return t.id
       }),
       customToppings: selectedToppings,
-      price: basePrice + toppingsPrice, // Unit price
+      price: basePrice + toppingsPrice,
       quantity: quantity,
       image: baseImage
     }
@@ -106,8 +106,14 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       onUpdateCartItem(newItem)
     } else if (onAddToCart) {
       onAddToCart(newItem)
+      // Flash the "just added" state, then reset
+      if (justAddedTimer.current) clearTimeout(justAddedTimer.current)
+      setJustAdded(true)
+      justAddedTimer.current = setTimeout(() => setJustAdded(false), 1400)
     }
   }
+
+  useEffect(() => () => { if (justAddedTimer.current) clearTimeout(justAddedTimer.current) }, [])
 
   const currentToppings = toppings[selectedCategory as keyof typeof toppings]
 
@@ -172,19 +178,24 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
         </div>
 
         <div className="absolute top-[-60px] w-[125vw] max-w-[500px] aspect-square" style={{ left: '50%', transform: 'translateX(-50%)' }}>
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="absolute inset-0"
-          >
-            <Image
-              src={baseImage}
-              alt="Pizza base"
-              fill
-              className="object-contain rounded-full"
-              priority
-            />
-          </motion.div>
+          <AnimatePresence mode="sync">
+            <motion.div
+              key={baseImage}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={baseImage}
+                alt="Pizza base"
+                fill
+                className="object-contain rounded-full"
+                priority
+              />
+            </motion.div>
+          </AnimatePresence>
 
           <AnimatePresence mode="popLayout">
             {selectedToppings.map((selected, index) => {
@@ -405,17 +416,48 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       <div className="fixed bottom-[120px] left-0 right-0 px-6 z-50 pointer-events-none flex justify-center">
         <motion.button
           onClick={handleAdd}
-          whileTap={{ scale: 0.9 }}
-          className="w-full max-w-[280px] h-14 bg-orange-500/80 backdrop-blur-md text-white border border-white/20 rounded-full shadow-xl flex items-center justify-center gap-3 font-bold text-lg pointer-events-auto"
+          whileTap={{ scale: 0.96 }}
+          animate={{
+            backgroundColor: justAdded ? "rgba(34, 197, 94, 0.9)" : "rgba(249, 115, 22, 0.82)",
+          }}
+          transition={{ duration: 0.25 }}
+          className="w-full max-w-[320px] h-14 backdrop-blur-md text-white border border-white/20 rounded-full shadow-xl flex items-center px-5 pointer-events-auto overflow-hidden"
         >
-          <motion.div
-            whileHover={{ x: -5 }}
-            whileTap={{ x: 15, rotate: -10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 10 }}
-          >
-            <ShoppingCart className="w-5 h-5" />
-          </motion.div>
-          הוספה לסל
+          <AnimatePresence mode="wait" initial={false}>
+            {justAdded ? (
+              <motion.div
+                key="added"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center justify-center gap-2 w-full"
+              >
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-bold text-lg">נוסף לסל!</span>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="default"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center justify-between w-full"
+              >
+                <motion.div
+                  whileTap={{ x: 15, rotate: -10 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </motion.div>
+                <span className="font-bold text-lg">הוספה לסל</span>
+                <span className="bg-white/20 rounded-full px-3 py-1 text-sm font-bold tabular-nums">
+                  ₪{totalPrice.toFixed(2)}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.button>
       </div>
     </div>

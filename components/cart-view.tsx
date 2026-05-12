@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Trash2, ShoppingBag, Pencil } from "lucide-react"
 
@@ -17,10 +17,13 @@ export function CartView({ items = [], onEditItem, onRemoveItem }: CartViewProps
     const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
     const [confirmingId, setConfirmingId] = useState<string | null>(null)
     const confirmingItem = confirmingId ? items.find(i => i.id === confirmingId) : null
+    const scrollRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => { scrollRef.current?.scrollTo(0, 0) }, [])
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-background">
-            <div className="flex-1 overflow-y-auto px-6 pb-40 pt-6">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-40 pt-6">
                 <h1 className="mb-6 text-2xl font-bold text-foreground">ההזמנה שלי</h1>
 
                 {items.length === 0 ? (
