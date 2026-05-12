@@ -11,7 +11,12 @@ import type { Coverage } from "./types"
  * exact horizontal/vertical center, so we can treat (~50, ~50) as the disc center safely.
  */
 export const PIZZA = {
-    centerX: 49.5,
+    // centerX shifted from the image's true center (49.24%) to compensate for the
+    // perceived right-bias on real devices — several topping PNGs have their visible
+    // blob right-of-center within their bounding box (parmesan @ 56.6%, basil @ 54.5%,
+    // mushroom @ 52.2%), so a uniform left-shift of the placement center fixes
+    // "left looks like middle / whole looks middle+right".
+    centerX: 47.0,
     centerY: 50.0,
     outerRadius: 23.0,
     sauceRadius: 17.0,

@@ -20,9 +20,7 @@ export const toppings = {
         { id: "tomatoes", name: "עגבניות", price: 1.0, color: "#FF6347", image: "/images/tomatos.png" },
     ],
     sauce: [
-        { id: "marinara", name: "מרינרה", price: 0, color: "#DC143C" },
-        { id: "white", name: "שום שמנת", price: 0.5, color: "#FFFAF0" },
-        { id: "bbq", name: "ברביקיו", price: 0.5, color: "#8B0000" },
-        { id: "pesto", name: "פסטו", price: 1.0, color: "#556B2F" },
+        { id: "marinara", name: "רוטב עגבניות", price: 0, color: "#DC143C" },
+        { id: "white", name: "רוטב שמנת", price: 0.5, color: "#FFFAF0" },
     ],
 }

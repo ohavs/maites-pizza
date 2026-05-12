@@ -93,7 +93,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
       customToppings: selectedToppings,
       price: basePrice + toppingsPrice, // Unit price
       quantity: quantity,
-      image: "/images/margherita.webp"
+      image: baseImage
     }
 
     if (editingItem && onUpdateCartItem) {
@@ -109,6 +109,10 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
   // Toppings are rendered at 32px. These values feed the geometry helper so toppings stay on the sauce.
   const STAGE_CONTAINER_PX = 500
   const TOPPING_RENDER_PX = 32
+
+  // Base pizza image: cream (`white`) sauce uses bian.webp, default uses margherita.
+  const hasWhiteSauce = selectedToppings.some(t => t.id === "white")
+  const baseImage = hasWhiteSauce ? "/images/bian.webp" : "/images/margherita.webp"
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background h-full relative">
@@ -165,7 +169,7 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
             className="absolute inset-0"
           >
             <Image
-              src="/images/margherita.webp"
+              src={baseImage}
               alt="Pizza base"
               fill
               className="object-contain rounded-full"
