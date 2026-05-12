@@ -293,9 +293,15 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
             {currentToppings.map((topping: any) => {
               const selected = selectedToppings.find(t => t.id === topping.id)
               const isSelected = !!selected
-              const isExpanded = isSelected && expandedToppingId === topping.id
+              const isSauce = toppings.sauce.some(s => s.id === topping.id)
+              const isExpanded = isSelected && !isSauce && expandedToppingId === topping.id
 
               const handleCardClick = () => {
+                // Sauces are a simple radio toggle — no coverage configuration.
+                if (isSauce) {
+                  toggleTopping(topping.id)
+                  return
+                }
                 if (!isSelected) {
                   toggleTopping(topping.id)
                 } else if (isExpanded) {
