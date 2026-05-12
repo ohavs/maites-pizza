@@ -51,18 +51,23 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
   const totalPrice = (basePrice + toppingsPrice) * quantity
 
   const toggleTopping = (toppingId: string) => {
+    const isSauce = toppings.sauce.some(s => s.id === toppingId)
+    const sauceIds = toppings.sauce.map(s => s.id)
     setSelectedToppings((prev) => {
       const exists = prev.find(t => t.id === toppingId)
       if (exists) {
         return prev.filter(t => t.id !== toppingId)
       }
-      return [...prev, { id: toppingId, coverage: "whole" }]
+      // Sauce is single-select: remove any other sauce before adding the new one.
+      const base = isSauce ? prev.filter(t => !sauceIds.includes(t.id)) : prev
+      return [...base, { id: toppingId, coverage: "whole" }]
     })
     // When adding a new topping, expand it for configuration; when removing, collapse.
     setExpandedToppingId((curr) => {
       const wasSelected = selectedToppings.some(t => t.id === toppingId)
       if (wasSelected) return curr === toppingId ? null : curr
-      return toppingId
+      // Sauces aren't configurable per-side, so don't expand them.
+      return isSauce ? null : toppingId
     })
   }
 
@@ -110,9 +115,12 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
   const STAGE_CONTAINER_PX = 500
   const TOPPING_RENDER_PX = 32
 
-  // Base pizza image: cream (`white`) sauce uses bian.webp, default uses margherita.
-  const hasWhiteSauce = selectedToppings.some(t => t.id === "white")
-  const baseImage = hasWhiteSauce ? "/images/bian.webp" : "/images/margherita.webp"
+  // Base pizza image follows the selected sauce. `white` (cream) → bian.webp,
+  // `marinara` (tomato) or no sauce → margherita.webp.
+  const selectedSauceId = selectedToppings.find(t =>
+    toppings.sauce.some(s => s.id === t.id)
+  )?.id
+  const baseImage = selectedSauceId === "white" ? "/images/bian.webp" : "/images/margherita.webp"
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background h-full relative">
@@ -188,7 +196,9 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                   break
                 }
               }
-              if (!toppingData) return null
+              // Skip items without an image (sauces) — they change the base pizza,
+              // not paint dots on top of it.
+              if (!toppingData?.image) return null
 
               const positions = generateToppingPositions({
                 toppingId: selected.id,
@@ -200,35 +210,38 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
               return (
                 <motion.div
                   key={`${selected.id}-${selected.coverage}`}
-                  initial={{ scale: 1, opacity: 1 }}
-                  animate={{ scale: 1, opacity: 1 }}
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 pointer-events-none"
                   style={{ zIndex: index + 1 }}
                 >
                   {positions.map((pos, i) => (
-                    <motion.div
+                    // Outer wrapper holds the static positioning transform
+                    // (left/top + translate(-50%) for centering + rotation + per-instance scale).
+                    // Framer-motion would otherwise clobber `style.transform` with its own
+                    // animation matrix, shifting toppings ~16px right of their target point.
+                    <div
                       key={i}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{
-                        scale: [0, 1.2, 1],
-                        opacity: 1,
-                      }}
-                      transition={{
-                        delay: i * 0.02,
-                        duration: 0.3,
-                        ease: "easeOut"
-                      }}
                       className="absolute"
                       style={{
                         left: `${pos.x}%`,
                         top: `${pos.y}%`,
-                        width: "32px", // Restored size
+                        width: "32px",
                         height: "32px",
                         transform: `translate(-50%, -50%) rotate(${pos.rotation}deg) scale(${pos.scale})`,
                       }}
                     >
-                      {toppingData?.image ? (
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{
+                          delay: i * 0.02,
+                          duration: 0.3,
+                          ease: "easeOut",
+                        }}
+                        className="w-full h-full"
+                      >
                         <Image
                           src={toppingData.image}
                           alt={toppingData.name}
@@ -236,16 +249,8 @@ export function PizzaBuilder({ onBack, onAddToCart, onUpdateCartItem, initialTop
                           height={32}
                           className="object-contain drop-shadow-md"
                         />
-                      ) : (
-                        <div
-                          className="w-3 h-3 rounded-full mx-auto mt-2"
-                          style={{
-                            backgroundColor: toppingData?.color,
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.3)"
-                          }}
-                        />
-                      )}
-                    </motion.div>
+                      </motion.div>
+                    </div>
                   ))}
                 </motion.div>
               )
