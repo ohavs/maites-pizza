@@ -22,3 +22,18 @@ export interface CartItem {
     quantity: number
     image: string
 }
+
+export interface Order {
+    id?: string
+    orderNumber: number
+    customer: {
+        name: string
+        phone: string
+    }
+    items: CartItem[]
+    total: number
+    paymentMethod: "cash" | "bit"
+    paymentStatus: "pending" | "paid"
+    status: "new" | "preparing" | "ready" | "completed"
+    createdAt: number
+}
