@@ -7,6 +7,8 @@ import {
 import { db } from "./firebase"
 import { Order, CartItem } from "./types"
 
+export const TERMS_VERSION = "2026-05"
+
 export async function createOrder(
   data: Pick<Order, "customer" | "items" | "total" | "paymentMethod">
 ): Promise<{ id: string; orderNumber: number }> {
@@ -29,6 +31,7 @@ export async function createOrder(
       paymentStatus: "pending",
       status: "new",
       createdAt: Date.now(),
+      acceptedTermsVersion: TERMS_VERSION,
     })
   })
 
