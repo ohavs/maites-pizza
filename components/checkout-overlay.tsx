@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, CheckCircle2, Loader2, Banknote, Smartphone, ChevronLeft } from "lucide-react"
+import { X, CheckCircle2, Loader2, Banknote, Smartphone, ChevronLeft, Check } from "lucide-react"
 import { CartItem } from "@/lib/types"
 import { createOrder } from "@/lib/orders"
 
@@ -39,8 +39,9 @@ export function CheckoutOverlay({ items, total, onClose, onOrderComplete }: Chec
   const [step, setStep] = useState<Step>("form")
   const [orderNumber, setOrderNumber] = useState(0)
   const [error, setError] = useState("")
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
-  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 9
+  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 9 && acceptedTerms
 
   const handleSubmit = async () => {
     if (!canSubmit) return
@@ -205,6 +206,40 @@ export function CheckoutOverlay({ items, total, onClose, onOrderComplete }: Chec
                     ))}
                   </div>
                 </div>
+
+                {/* Terms consent */}
+                <button
+                  type="button"
+                  onClick={() => setAcceptedTerms(v => !v)}
+                  className="flex items-start gap-3 w-full text-right group"
+                  aria-checked={acceptedTerms}
+                  role="checkbox"
+                >
+                  <motion.div
+                    animate={{
+                      backgroundColor: acceptedTerms ? "rgb(249 115 22)" : "rgba(0,0,0,0)",
+                      borderColor: acceptedTerms ? "rgb(249 115 22)" : "rgb(209 213 219)",
+                    }}
+                    transition={{ duration: 0.15 }}
+                    className="mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0"
+                  >
+                    <AnimatePresence>
+                      {acceptedTerms && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                  <span className="text-xs text-muted-foreground leading-relaxed pt-0.5">
+                    קראתי ואני מסכים/ה ל<span className="text-primary font-bold">תנאי השימוש</span> ול<span className="text-primary font-bold">מדיניות הפרטיות</span>
+                  </span>
+                </button>
 
                 {error && (
                   <p className="text-sm text-red-500 text-center">{error}</p>

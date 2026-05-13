@@ -36,4 +36,5 @@ export interface Order {
     paymentStatus: "pending" | "paid"
     status: "new" | "preparing" | "ready" | "completed"
     createdAt: number
+    acceptedTermsVersion: string
 }
